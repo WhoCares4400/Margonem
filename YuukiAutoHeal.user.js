@@ -1,9 +1,7 @@
 // ==UserScript==
 // @name         Margonem AutoHeal [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.6
-// @updateURL    https://github.com/WhoCares4400/Margonem/raw/refs/heads/main/YuukiAutoHeal.user.js
-// @downloadURL  https://github.com/WhoCares4400/Margonem/raw/refs/heads/main/YuukiAutoHeal.user.js
+// @version      1.7
 // @description  AutoHeal do Margonem (Nowy Interfejs)
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -22,58 +20,58 @@
 
 class YuukiAutoHeal {
     constructor() {
-        if (this.isOldInterface()) {
-            console.error("AutoHeal działa tylko w NOWYM INTERFEJSIE!");
-            return;
-        }
+		if (this.isOldInterface()) {
+			console.error("AutoHeal działa tylko w NOWYM INTERFEJSIE!");
+			return;
+		}
 
-        this.initializeProperties();
-        this.createContainer();
-        this.initializeAutoHealDetection();
-        this.initializeHpDataCollection();
-    }
+		this.initializeProperties();
+		this.createContainer();
+		this.initializeAutoHealDetection();
+		this.initializeHpDataCollection();
+	}
 
-    isOldInterface() {
-        return unsafeWindow.getCookie("interface") === 'si';
-    }
+	isOldInterface() {
+		return unsafeWindow.getCookie("interface") === 'si';
+	}
 
-    initializeProperties() {
-        const self = this;
+	initializeProperties() {
+		const self = this;
 
-        this.version = '1.6';
-        this.healInterval = 150; // ms
+		this.version = '1.7';
+		this.healInterval = 150; // ms
 
-        this.hp = null;
-        this.maxhp = null;
+		this.hp = null;
+		this.maxhp = null;
 
-        this.rarityDict = {
-            legendary: 'L',
-            upgraded: 'Ul',
-            heroic: 'H',
-            unique: 'U',
-            common: 'P'
-        };
+		this.rarityDict = {
+			legendary: 'L',
+			upgraded: 'Ul',
+			heroic: 'H',
+			unique: 'U',
+			common: 'P'
+		};
 
-        this.options = {
-            active: Boolean(parseInt(localStorage.getItem('ah-active') ?? 1)),
-            shrinked: Boolean(parseInt(localStorage.getItem('ah-shrinked') ?? 0)),
-            hPotion: Boolean(parseInt(localStorage.getItem('ah-hPotion') ?? 1)),
-            hFull: Boolean(parseInt(localStorage.getItem('ah-hFull') ?? 0)),
-            hPercent: Boolean(parseInt(localStorage.getItem('ah-hPercent') ?? 0)),
-            hHealToFull: Boolean(parseInt(localStorage.getItem('ah-hHealToFull') ?? 0)),
-            hMinHealHpPercent: parseInt(localStorage.getItem('ah-hMinHealHpPercent') ?? 80),
+		this.options = {
+			active: Boolean(parseInt(localStorage.getItem('ah-active') ?? 1)),
+			shrinked: Boolean(parseInt(localStorage.getItem('ah-shrinked') ?? 0)),
+			hPotion: Boolean(parseInt(localStorage.getItem('ah-hPotion') ?? 1)),
+			hFull: Boolean(parseInt(localStorage.getItem('ah-hFull') ?? 0)),
+			hPercent: Boolean(parseInt(localStorage.getItem('ah-hPercent') ?? 0)),
+			hHealToFull: Boolean(parseInt(localStorage.getItem('ah-hHealToFull') ?? 0)),
+			hMinHealHpPercent: parseInt(localStorage.getItem('ah-hMinHealHpPercent') ?? 80),
             hMinPotionHealing: parseInt(localStorage.getItem('ah-hMinPotionHealing') ?? 0),
-            rarity: JSON.parse(localStorage.getItem('ah-hRarity')) || ['L', 'Ul', 'H', 'U', 'P'],
-            hNotify: Boolean(parseInt(localStorage.getItem('ah-hNotify') ?? 1)),
-            hHpNumDisplay: Boolean(parseInt(localStorage.getItem('ah-hHpNumDisplay') ?? 1))
-        };
-    }
+			rarity: JSON.parse(localStorage.getItem('ah-hRarity')) || ['L', 'Ul', 'H', 'U', 'P'],
+			hNotify: Boolean(parseInt(localStorage.getItem('ah-hNotify') ?? 1)),
+			hHpNumDisplay: Boolean(parseInt(localStorage.getItem('ah-hHpNumDisplay') ?? 1))
+		};
+	}
 
-    initializeAutoHealDetection() {
+	initializeAutoHealDetection() {
         const self = this;
-        //Create heal detection
+		//Create heal detection
         const autoHealInitializationInterval = setInterval(() => {
-            if (unsafeWindow.Engine && unsafeWindow.Engine.battle && unsafeWindow.Engine.battle.hasOwnProperty('endBattle')) {
+            if (unsafeWindow?.Engine?.battle?.hasOwnProperty('endBattle')) {
                 clearInterval(autoHealInitializationInterval);
 
                 setTimeout(() => {
@@ -108,12 +106,12 @@ class YuukiAutoHeal {
                 this.Engine = unsafeWindow.getEngine();
             }
         }, 100);
-    }
+	}
     initializeHpDataCollection() {
         const self = this;
         //Create HP data collection
         const hpIndicatorInitializationInterval = setInterval(() => {
-            if (unsafeWindow.Engine && unsafeWindow.Engine.hero && unsafeWindow.Engine.hero.d && unsafeWindow.Engine.hero.d.warrior_stats && unsafeWindow.Engine.hero.d.warrior_stats.hasOwnProperty('hp')) {
+            if (unsafeWindow?.Engine?.hero?.d?.warrior_stats?.hasOwnProperty('hp')) {
                 clearInterval(hpIndicatorInitializationInterval);
 
                 self.hp = unsafeWindow.Engine.hero.d.warrior_stats.hp;
@@ -184,9 +182,9 @@ class YuukiAutoHeal {
         }, 100);
     }
 
-    createContainer() {
+	createContainer() {
         const self = this;
-        GM_addStyle(`
+		GM_addStyle(`
 			#ah-container {
 				width: 300px;
 				background-color: rgba(40, 40, 40, 0.85);
@@ -447,8 +445,8 @@ class YuukiAutoHeal {
 			}
 		`);
 
-        // Create container HTML
-        const containerHTML = `
+		// Create container HTML
+		const containerHTML = `
 			<div id="ah-container" class="shadow${this.options.shrinked ? ' shrinked' : ''}">
 				<div id="ah-container-header" class="d-flex align-items-center justify-content-center" title="Przeciągnij - Kliknij dwukrotnie aby zwinąć/rozwinąć">
 					<div class="position-absolute start-0" style="z-index:1" title="Włącz/Wyłącz AutoHeal">
@@ -509,150 +507,150 @@ class YuukiAutoHeal {
 			</div>
 		`;
 
-        function appendContainerToBody(containerHTML) {
-            const container = document.createElement('div');
-            container.innerHTML = containerHTML;
-            document.body.appendChild(container);
-        }
+		function appendContainerToBody(containerHTML) {
+			const container = document.createElement('div');
+			container.innerHTML = containerHTML;
+			document.body.appendChild(container);
+		}
 
-        function handleOptionClick() {
-            const type = $(this).data('opt');
-            $(this).toggleClass('active');
-            self.options[type] = !self.options[type];
-            localStorage.setItem('ah-' + type, self.options[type] ? 1 : 0);
+		function handleOptionClick() {
+			const type = $(this).data('opt');
+			$(this).toggleClass('active');
+			self.options[type] = !self.options[type];
+			localStorage.setItem('ah-' + type, self.options[type] ? 1 : 0);
 
-            if (type === 'active') {
-                unsafeWindow.message(`AutoHeal ${(self.options[type] ? " włączony " : " wyłączony")}`);
-            }
-            if (type === 'hHpNumDisplay') {
-                if (self.options[type]) {
-                    self.$hpPointerContainer.text(`${self.hp} / ${self.maxhp}`);
-                }
-                $('.ah-hp-number-display').stop(true, true).fadeToggle("fast");
-            }
-        }
+			if (type === 'active') {
+				unsafeWindow.message(`AutoHeal ${(self.options[type] ? " włączony " : " wyłączony")}`);
+			}
+			if (type === 'hHpNumDisplay') {
+				if (self.options[type]) {
+					self.$hpPointerContainer.text(`${self.hp} / ${self.maxhp}`);
+				}
+				$('.ah-hp-number-display').stop(true, true).fadeToggle("fast");
+			}
+		}
 
-        function handleRarityClick() {
-            const rarity = $(this).data('rarity');
-            $(this).toggleClass('active');
-            if ($(this).hasClass('active')) {
-                self.options.rarity.push(rarity);
-            } else {
-                self.options.rarity = self.options.rarity.filter(r => r !== rarity);
-            }
-            localStorage.setItem('ah-hRarity', JSON.stringify(self.options.rarity));
-        }
+		function handleRarityClick() {
+			const rarity = $(this).data('rarity');
+			$(this).toggleClass('active');
+			if ($(this).hasClass('active')) {
+				self.options.rarity.push(rarity);
+			} else {
+				self.options.rarity = self.options.rarity.filter(r => r !== rarity);
+			}
+			localStorage.setItem('ah-hRarity', JSON.stringify(self.options.rarity));
+		}
 
-        function handleLabelClick(e) {
-            if ($(e.target).is("input")) return;
-            $(this).prev().trigger('click');
-        }
+		function handleLabelClick(e) {
+			if ($(e.target).is("input")) return;
+			$(this).prev().trigger('click');
+		}
 
-        function handleManualHealClick() {
-            self.autoHeal();
-        }
+		function handleManualHealClick() {
+			self.autoHeal();
+		}
 
-        function handleMinHealHpPercentChange() {
-            let minHealHpPercent = $(this).val();
-            const minVal = parseInt($(this).attr("min"));
-            const maxVal = parseInt($(this).attr("max"));
+		function handleMinHealHpPercentChange() {
+			let minHealHpPercent = $(this).val();
+			const minVal = parseInt($(this).attr("min"));
+			const maxVal = parseInt($(this).attr("max"));
 
-            if (minHealHpPercent === 0 || minHealHpPercent === "" || minHealHpPercent > maxVal || minHealHpPercent < minVal) {
-                return;
-            }
+			if (minHealHpPercent === 0 || minHealHpPercent === "" || minHealHpPercent > maxVal || minHealHpPercent < minVal) {
+				return;
+			}
 
-            self.options.hMinHealHpPercent = minHealHpPercent;
-            localStorage.setItem('ah-hMinHealHpPercent', minHealHpPercent);
-        }
+			self.options.hMinHealHpPercent = minHealHpPercent;
+			localStorage.setItem('ah-hMinHealHpPercent', minHealHpPercent);
+		}
 
-        function handleMinHealHpPercentFocusOut() {
-            let minHealHpPercent = $(this).val();
-            const minVal = parseInt($(this).attr("min"));
-            const maxVal = parseInt($(this).attr("max"));
+		function handleMinHealHpPercentFocusOut() {
+			let minHealHpPercent = $(this).val();
+			const minVal = parseInt($(this).attr("min"));
+			const maxVal = parseInt($(this).attr("max"));
 
-            if (minHealHpPercent === 0 || minHealHpPercent === "" || minHealHpPercent > maxVal || minHealHpPercent < minVal) {
-                $(this).val(self.options.hMinHealHpPercent);
-            }
-        }
+			if (minHealHpPercent === 0 || minHealHpPercent === "" || minHealHpPercent > maxVal || minHealHpPercent < minVal) {
+				$(this).val(self.options.hMinHealHpPercent);
+			}
+		}
 
-        function handleMinPotionHealingChange() {
-            let minPotionHealing = $(this).val();
-            const minVal = parseInt($(this).attr("min"));
+		function handleMinPotionHealingChange() {
+			let minPotionHealing = $(this).val();
+			const minVal = parseInt($(this).attr("min"));
 
-            if (minPotionHealing === "" || minPotionHealing < minVal) {
-                return;
-            }
+			if (minPotionHealing === "" || minPotionHealing < minVal) {
+				return;
+			}
 
-            self.options.hMinPotionHealing = minPotionHealing;
-            localStorage.setItem('ah-hMinPotionHealing', minPotionHealing);
-        }
+			self.options.hMinPotionHealing = minPotionHealing;
+			localStorage.setItem('ah-hMinPotionHealing', minPotionHealing);
+		}
 
-        function handleMinPotionHealingFocusOut() {
-            let minPotionHealing = $(this).val();
-            const minVal = parseInt($(this).attr("min"));
+		function handleMinPotionHealingFocusOut() {
+			let minPotionHealing = $(this).val();
+			const minVal = parseInt($(this).attr("min"));
 
-            if (minPotionHealing === "" || minPotionHealing < minVal) {
-                self.options.hMinPotionHealing = 0;
-                localStorage.setItem('ah-hMinPotionHealing', 0);
-                $(this).val(0);
-            }
-        }
+			if (minPotionHealing === "" || minPotionHealing < minVal) {
+				self.options.hMinPotionHealing = 0;
+				localStorage.setItem('ah-hMinPotionHealing', 0);
+				$(this).val(0);
+			}
+		}
 
-        function ensureInBounds($container) {
-            const winWidth = $(window).width();
-            const winHeight = $(window).height();
-            const contWidth = $container.outerWidth();
-            const contHeight = $container.outerHeight();
+		function ensureInBounds($container) {
+			const winWidth = $(window).width();
+			const winHeight = $(window).height();
+			const contWidth = $container.outerWidth();
+			const contHeight = $container.outerHeight();
 
-            let left = parseInt($container.css('left'));
-            let top = parseInt($container.css('top'));
+			let left = parseInt($container.css('left'));
+			let top = parseInt($container.css('top'));
 
-            left = Math.max(0, Math.min(left, winWidth - contWidth));
-            top = Math.max(0, Math.min(top, winHeight - contHeight));
+			left = Math.max(0, Math.min(left, winWidth - contWidth));
+			top = Math.max(0, Math.min(top, winHeight - contHeight));
 
-            $container.css({ left: left + 'px', top: top + 'px' });
-        }
+			$container.css({ left: left + 'px', top: top + 'px' });
+		}
 
-        function initializeDragging($header, $container) {
-            let isDragging = false;
-            let offsetX = 0, offsetY = 0;
+		function initializeDragging($header, $container) {
+			let isDragging = false;
+			let offsetX = 0, offsetY = 0;
 
-            $header.on('mousedown', function(e) {
-                isDragging = true;
-                offsetX = e.clientX - $container.offset().left;
-                offsetY = e.clientY - $container.offset().top;
-                $header.css('cursor', 'grabbing');
-            });
+			$header.on('mousedown', function(e) {
+				isDragging = true;
+				offsetX = e.clientX - $container.offset().left;
+				offsetY = e.clientY - $container.offset().top;
+				$header.css('cursor', 'grabbing');
+			});
 
-            $(document).on('mousemove', function(e) {
-                if (isDragging) {
-                    const left = e.clientX - offsetX;
-                    const top = e.clientY - offsetY;
-                    $container.css({ left: `${left}px`, top: `${top}px` });
-                    ensureInBounds($container);
-                }
-            });
+			$(document).on('mousemove', function(e) {
+				if (isDragging) {
+					const left = e.clientX - offsetX;
+					const top = e.clientY - offsetY;
+					$container.css({ left: `${left}px`, top: `${top}px` });
+					ensureInBounds($container);
+				}
+			});
 
-            $(document).on('mouseup', function() {
-                if (isDragging) {
-                    isDragging = false;
-                    $header.css('cursor', 'grab');
-                    const left = $container.css('left');
-                    const top = $container.css('top');
-                    localStorage.setItem('ah-c-pos', JSON.stringify({ left, top }));
-                }
-            });
-        }
+			$(document).on('mouseup', function() {
+				if (isDragging) {
+					isDragging = false;
+					$header.css('cursor', 'grab');
+					const left = $container.css('left');
+					const top = $container.css('top');
+					localStorage.setItem('ah-c-pos', JSON.stringify({ left, top }));
+				}
+			});
+		}
 
-        function restoreContainerPosition($container) {
-            const savedPosition = localStorage.getItem('ah-c-pos');
-            if (savedPosition) {
-                const { left, top } = JSON.parse(savedPosition);
-                $container.css({ left, top });
-            } else {
-                $container.css({ top: '100px', left: '100px' });
-            }
-        }
+		function restoreContainerPosition($container) {
+			const savedPosition = localStorage.getItem('ah-c-pos');
+			if (savedPosition) {
+				const { left, top } = JSON.parse(savedPosition);
+				$container.css({ left, top });
+			} else {
+				$container.css({ top: '100px', left: '100px' });
+			}
+		}
 
         function initializeScrolling($body) {
             let isScrolling = false;
@@ -679,12 +677,12 @@ class YuukiAutoHeal {
             });
         }
 
-        function handleHeaderDblClick($header, $body) {
-            $header.on('dblclick', function(e) {
-                if ($(e.target).hasClass("checkbox")) return;
+		function handleHeaderDblClick($header, $body) {
+			$header.on('dblclick', function(e) {
+				if ($(e.target).hasClass("checkbox")) return;
 
                 self.options.shrinked = !self.options.shrinked;
-                localStorage.setItem('ah-shrinked', self.options.shrinked ? 1 : 0);
+				localStorage.setItem('ah-shrinked', self.options.shrinked ? 1 : 0);
 
                 if (self.options.shrinked) {
                     $('#ah-expand-icon').css({transform: 'rotate(0deg)'});
@@ -706,41 +704,41 @@ class YuukiAutoHeal {
                     }, 400);
                 }
 
-            });
-        }
+			});
+		}
 
         function handleExpandIconClick($header) {
             $('#ah-expand-icon').click(()=>{ $header.trigger('dblclick'); });
         }
 
-        function initializeEventListeners() {
-            $('#heal-active-checkbox, #opt-potion-heal, #opt-full-heal, #opt-percent-heal, #opt-heal-to-full, #opt-notify, #opt-show-hp-display').on('click', handleOptionClick);
-            $('#opt-rarity-p, #opt-rarity-u, #opt-rarity-h, #opt-rarity-ul, #opt-rarity-l').on('click', handleRarityClick);
-            $('#ah-container-body div.label').on('click', handleLabelClick);
-            $('#h-manual-heal-btn').on('click', handleManualHealClick);
-            $('#hMinHealHpPercent').on('input change', handleMinHealHpPercentChange).on('focusout', handleMinHealHpPercentFocusOut);
-            $('#hMinPotionHealing').on('input change', handleMinPotionHealingChange).on('focusout', handleMinPotionHealingFocusOut);
+		function initializeEventListeners() {
+			$('#heal-active-checkbox, #opt-potion-heal, #opt-full-heal, #opt-percent-heal, #opt-heal-to-full, #opt-notify, #opt-show-hp-display').on('click', handleOptionClick);
+			$('#opt-rarity-p, #opt-rarity-u, #opt-rarity-h, #opt-rarity-ul, #opt-rarity-l').on('click', handleRarityClick);
+			$('#ah-container-body div.label').on('click', handleLabelClick);
+			$('#h-manual-heal-btn').on('click', handleManualHealClick);
+			$('#hMinHealHpPercent').on('input change', handleMinHealHpPercentChange).on('focusout', handleMinHealHpPercentFocusOut);
+			$('#hMinPotionHealing').on('input change', handleMinPotionHealingChange).on('focusout', handleMinPotionHealingFocusOut);
 
-            $(window).on('resize', () => ensureInBounds($('#ah-container')));
-        }
+			$(window).on('resize', () => ensureInBounds($('#ah-container')));
+		}
 
-        function init() {
-            appendContainerToBody(containerHTML);
+		function init() {
+			appendContainerToBody(containerHTML);
 
-            const $container = $('#ah-container');
-            const $header = $('#ah-container-header');
-            const $body = $('#ah-container-body');
+			const $container = $('#ah-container');
+			const $header = $('#ah-container-header');
+			const $body = $('#ah-container-body');
 
-            initializeDragging($header, $container);
-            restoreContainerPosition($container);
+			initializeDragging($header, $container);
+			restoreContainerPosition($container);
             initializeScrolling($body);
-            handleHeaderDblClick($header, $body);
+			handleHeaderDblClick($header, $body);
             handleExpandIconClick($header);
-            initializeEventListeners();
-        }
+			initializeEventListeners();
+		}
 
-        init();
-    }
+		init();
+	}
 
     useItem(item) {
         const { name, id } = item;
@@ -750,74 +748,74 @@ class YuukiAutoHeal {
         });
     }
 
-    getItemWithMaxPropValue(items, property) {
-        if (items.length > 0) {
+	getItemWithMaxPropValue(items, property) {
+		if (items.length > 0) {
             return items.reduce((first, second) =>
                 second._cachedStats[property] > first._cachedStats[property] ? second : first
             );
         }
-    }
+	}
     getItemWithMinPropValue(items, property) {
-        if (items.length > 0) {
+		if (items.length > 0) {
             return items.reduce((first, second) =>
                 parseInt(second._cachedStats[property]) < parseInt(first._cachedStats[property]) ? second : first
             );
         }
-    }
+	}
 
     getPotions(hp, maxhp, lvl) {
         const potions = !this.options.hPotion ? [] : this.Engine.items
-            .fetchLocationItems("g")
-            .filter((item) => item._cachedStats.hasOwnProperty("leczy"))
-            .filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
-            .filter((item) => item._cachedStats.leczy >= this.options.hMinPotionHealing)
-            .filter(
-                (item) =>
-                    !item._cachedStats.hasOwnProperty("lvl") ||
-                    (item._cachedStats.hasOwnProperty("lvl") && item._cachedStats.lvl <= lvl)
-            )
-            .filter(
-                (item) =>
-                    !item._cachedStats.hasOwnProperty("timelimit") ||
-                    (item._cachedStats.hasOwnProperty("timelimit") && !item._cachedStats.timelimit.includes(","))
-            );
+                .fetchLocationItems("g")
+                .filter((item) => item._cachedStats.hasOwnProperty("leczy"))
+				.filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
+                .filter((item) => item._cachedStats.leczy >= this.options.hMinPotionHealing)
+                .filter(
+                    (item) =>
+                        !item._cachedStats.hasOwnProperty("lvl") ||
+                        (item._cachedStats.hasOwnProperty("lvl") && item._cachedStats.lvl <= lvl)
+                )
+                .filter(
+                    (item) =>
+                        !item._cachedStats.hasOwnProperty("timelimit") ||
+                        (item._cachedStats.hasOwnProperty("timelimit") && !item._cachedStats.timelimit.includes(","))
+                );
 
         return potions;
     }
     getFullHeals(hp, maxhp, lvl) {
         const fullHeals = !this.options.hFull ? [] : this.Engine.items
-            .fetchLocationItems("g")
-            .filter((item) => item._cachedStats.hasOwnProperty("fullheal"))
-            .filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
-            .filter(
-                (item) =>
-                    !item._cachedStats.hasOwnProperty("lvl") ||
-                    (item._cachedStats.hasOwnProperty("lvl") && item._cachedStats.lvl <= lvl)
-            )
-            .filter(
-                (item) =>
-                    !item._cachedStats.hasOwnProperty("timelimit") ||
-                    (item._cachedStats.hasOwnProperty("timelimit") && !item._cachedStats.timelimit.includes(","))
-            );
+                .fetchLocationItems("g")
+                .filter((item) => item._cachedStats.hasOwnProperty("fullheal"))
+				.filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
+                .filter(
+                    (item) =>
+                        !item._cachedStats.hasOwnProperty("lvl") ||
+                        (item._cachedStats.hasOwnProperty("lvl") && item._cachedStats.lvl <= lvl)
+                )
+                .filter(
+                    (item) =>
+                        !item._cachedStats.hasOwnProperty("timelimit") ||
+                        (item._cachedStats.hasOwnProperty("timelimit") && !item._cachedStats.timelimit.includes(","))
+                );
 
         return fullHeals;
     }
     getPercentHeals(hp, maxhp, lvl) {
         const percentHeals = !this.options.hPercent ? [] : this.Engine.items
-            .fetchLocationItems("g")
-            .filter((item) => item._cachedStats.hasOwnProperty("perheal"))
-            .filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
-            .filter((item) => item._cachedStats.perheal <= ((maxhp - hp) * 100) / maxhp)
-            .filter(
-                (item) =>
-                    !item._cachedStats.hasOwnProperty("lvl") ||
-                    (item._cachedStats.hasOwnProperty("lvl") && item._cachedStats.lvl <= lvl)
-            )
-            .filter(
-                (item) =>
-                    !item._cachedStats.hasOwnProperty("timelimit") ||
-                    (item._cachedStats.hasOwnProperty("timelimit") && !item._cachedStats.timelimit.includes(","))
-            );
+                .fetchLocationItems("g")
+                .filter((item) => item._cachedStats.hasOwnProperty("perheal"))
+				.filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
+                .filter((item) => item._cachedStats.perheal <= ((maxhp - hp) * 100) / maxhp)
+                .filter(
+                    (item) =>
+                        !item._cachedStats.hasOwnProperty("lvl") ||
+                        (item._cachedStats.hasOwnProperty("lvl") && item._cachedStats.lvl <= lvl)
+                )
+                .filter(
+                    (item) =>
+                        !item._cachedStats.hasOwnProperty("timelimit") ||
+                        (item._cachedStats.hasOwnProperty("timelimit") && !item._cachedStats.timelimit.includes(","))
+                );
 
         return percentHeals;
     }
@@ -850,9 +848,9 @@ class YuukiAutoHeal {
 
             if (item !== undefined) {
                 this.useItem(item);
-                if(this.options.hNotify) {
-                    unsafeWindow.message('Uleczono: '+item.name+' (*'+this.rarityDict[item._cachedStats.rarity]+'*)');
-                }
+				if(this.options.hNotify) {
+					unsafeWindow.message('Uleczono: '+item.name+' (*'+this.rarityDict[item._cachedStats.rarity]+'*)');
+				}
             }
         }
     }
