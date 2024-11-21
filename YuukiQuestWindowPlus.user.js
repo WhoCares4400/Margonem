@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Quest Window+ (QuestW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Odświeżone okno z questami
 // @author       Paladynka Yuuki
 // @updateURL    https://github.com/WhoCares4400/Margonem/raw/refs/heads/main/YuukiQuestWindowPlus.user.js
@@ -159,7 +159,10 @@
         .yuuki-qw-plus .quest-box .info-wrapper .quest-buttons .quest-buttons-wrapper {
             display: flex;
             flex-wrap: wrap;
+            height: 27px;
             width: 38px;
+            margin-top: -3px;
+            transform: scale(0.8);
         }
         .yuuki-qw-plus .quest-box .info-wrapper .quest-buttons .quest-buttons-wrapper .button {
             height: 16px;
