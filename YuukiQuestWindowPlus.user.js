@@ -15,6 +15,8 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=margonem.pl
 // @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
 // ==/UserScript==
 
 (function () {
@@ -92,7 +94,6 @@
         }
         .yuuki-qw-plus .quest-log .scroll-wrapper.classic-bar .scrollbar-wrapper .arrow-up::before {
             content: ">";
-
         }
         .yuuki-qw-plus .quest-log .scroll-wrapper.classic-bar .scrollbar-wrapper .arrow-down::before {
             content: "<";
@@ -105,7 +106,6 @@
         .yuuki-qw-plus .quest-log .scroll-wrapper.classic-bar .scrollbar-wrapper .background {
             left: -1px;
         }
-
 
         .yuuki-qw-plus:not([data-opacity-lvl="0"]) .quest-log .quest-box .info-wrapper {
             background: linear-gradient(0deg, rgb(0 0 0 / 10%) 0%, rgb(0 0 0 / 25%) 100%);
@@ -204,7 +204,6 @@
             margin-top: 2px;
         }
 
-
         .yuuki-qw-plus-dis .quest-log .end-line,
         .yuuki-qw-plus-dis .border-image,
         .yuuki-qw-plus-dis .increase-opacity,
@@ -253,7 +252,7 @@
         monitorScrollPane(wnd);
 
         // Apply main class to the window based on stored settings
-        const isEnabled = Boolean(parseInt(localStorage.getItem('yuukiQuestsEnabled'), 10));
+        const isEnabled = Boolean(parseInt(GM_getValue('yuukiQuestsEnabled', '1'), 10));
         if (isEnabled) {
             wnd.classList.add('yuuki-qw-plus');
         } else {
@@ -275,8 +274,8 @@
 
         wnd.querySelector('.border-image')?.style.setProperty('margin', '0');
 
-        const opacityLevel = parseInt(localStorage.getItem('questOpacityLvl'), 10);
-        wnd.setAttribute('data-opacity-lvl', isNaN(opacityLevel) ? '3' : opacityLevel.toString());
+        const opacityLevel = parseInt(GM_getValue('questOpacityLvl', '3'), 10);
+        wnd.setAttribute('data-opacity-lvl', opacityLevel.toString());
 
         // Create opacity control button
         const increaseOpacityBtn = document.createElement('div');
@@ -292,7 +291,7 @@
             opacity = isNaN(opacity) ? 0 : opacity;
             const newOpacity = (opacity + 1) % 6;
             wnd.setAttribute('data-opacity-lvl', newOpacity.toString());
-            localStorage.setItem('questOpacityLvl', newOpacity.toString());
+            GM_setValue('questOpacityLvl', newOpacity.toString());
         });
         wnd.appendChild(increaseOpacityBtn);
     }
@@ -310,7 +309,7 @@
         const questLog = wnd.querySelector('.quest-log');
         if (!questLog) return;
 
-        const storedHeight = parseInt(localStorage.getItem('questWindowHeight'), 10);
+        const storedHeight = parseInt(GM_getValue('questWindowHeight', DEFAULT_HEIGHT.toString()), 10);
         const initialHeight = isNaN(storedHeight) ? DEFAULT_HEIGHT : storedHeight;
         questLog.style.height = `${initialHeight}vh`;
 
@@ -327,7 +326,7 @@
             currentHeight = currentHeight >= MAX_HEIGHT ? MIN_HEIGHT : currentHeight + HEIGHT_INCREMENT;
             questLog.style.height = `${currentHeight}vh`;
             Engine?.quests?.updateScroll();
-            localStorage.setItem('questWindowHeight', currentHeight.toString());
+            GM_setValue('questWindowHeight', currentHeight.toString());
         });
         wnd.appendChild(toggleSizeBtn);
     }
@@ -355,7 +354,7 @@
         if (!questWrapper) return;
 
         // Apply saved quest order
-        const savedOrder = localStorage.getItem('questOrder');
+        const savedOrder = GM_getValue('questOrder');
         if (savedOrder) {
             try {
                 const order = JSON.parse(savedOrder);
@@ -381,14 +380,14 @@
     }
 
     /**
-     * Saves the current order of quests to localStorage.
+     * Saves the current order of quests to storage.
      * @param {HTMLElement} questWrapper - The quest wrapper element.
      */
     function saveQuestOrder(questWrapper) {
         const order = Array.from(questWrapper.children)
             .filter((child) => !child.classList.contains('middle-graphics'))
             .map((child) => child.className.split(' ')[1]);
-        localStorage.setItem('questOrder', JSON.stringify(order));
+        GM_setValue('questOrder', JSON.stringify(order));
     }
 
     /**
@@ -443,7 +442,7 @@
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = 'hide-collapsed-quests';
-        checkbox.checked = Boolean(parseInt(localStorage.getItem('questCollapsedHide'), 10));
+        checkbox.checked = Boolean(parseInt(GM_getValue('questCollapsedHide', '0'), 10));
         checkbox.style.zIndex = '1';
 
         // Update quest visibility based on checkbox state
@@ -454,7 +453,7 @@
                 questBox?.classList.toggle('quest-hidden', checkbox.checked);
             });
             Engine?.quests?.updateScroll();
-            localStorage.setItem('questCollapsedHide', checkbox.checked ? '1' : '0');
+            GM_setValue('questCollapsedHide', checkbox.checked ? '1' : '0');
         };
 
         updateQuestVisibility();
@@ -518,7 +517,7 @@
                 wnd.classList.add('yuuki-qw-plus-dis');
                 wnd.querySelector('.quest-log')?.style.setProperty('height', '60vh');
                 Engine?.quests?.updateScroll();
-                localStorage.setItem('yuukiQuestsEnabled', '0');
+                GM_setValue('yuukiQuestsEnabled', '0');
             }
         );
         disableBtn.style.marginLeft = '2px';
@@ -533,10 +532,10 @@
             function () {
                 wnd.classList.remove('yuuki-qw-plus-dis');
                 wnd.classList.add('yuuki-qw-plus', 'transparent');
-                const storedHeight = parseInt(localStorage.getItem('questWindowHeight'), 10) || 40;
+                const storedHeight = parseInt(GM_getValue('questWindowHeight', '40'), 10) || 40;
                 wnd.querySelector('.quest-log')?.style.setProperty('height', `${storedHeight}vh`);
                 Engine?.quests?.updateScroll();
-                localStorage.setItem('yuukiQuestsEnabled', '1');
+                GM_setValue('yuukiQuestsEnabled', '1');
             }
         );
         Object.assign(enableBtn.style, {
@@ -649,7 +648,7 @@
             });
 
             if (needsUpdate) {
-                scrollPane.scrollTop = parseFloat(localStorage.getItem('questScrollPosition')) || 0;
+                scrollPane.scrollTop = parseFloat(GM_getValue('questScrollPosition', '0')) || 0;
                 Engine?.quests?.updateScroll();
                 refreshInfoCounts(wnd);
             }
@@ -666,9 +665,9 @@
         const scrollPane = wnd.querySelector('.scroll-pane');
         if (!scrollPane) return;
 
-        scrollPane.scrollTop = parseFloat(localStorage.getItem('questScrollPosition')) || 0;
+        scrollPane.scrollTop = parseFloat(GM_getValue('questScrollPosition', '0')) || 0;
         scrollPane.addEventListener('scroll', () => {
-            localStorage.setItem('questScrollPosition', scrollPane.scrollTop.toString());
+            GM_setValue('questScrollPosition', scrollPane.scrollTop.toString());
         });
     }
 
