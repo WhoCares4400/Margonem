@@ -4,6 +4,8 @@
 // @version      1.2
 // @description  Odświeżone okno z questami
 // @author       Paladynka Yuuki
+// @updateURL    https://github.com/WhoCares4400/Margonem/raw/refs/heads/main/YuukiQuestWindowPlus.user.js
+// @downloadURL  https://github.com/WhoCares4400/Margonem/raw/refs/heads/main/YuukiQuestWindowPlus.user.js
 // @match        http*://*.margonem.pl/
 // @match        http*://*.margonem.com/
 // @exclude      http*://margonem.*/*
