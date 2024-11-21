@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Quest Window+ (QuestW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Odświeżone okno z questami
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -145,7 +145,7 @@
             right: 0;
             border: none;
         }
-        .yuuki-qw-plus .quest-log .end-line {
+        .yuuki-qw-plus .end-line {
             background: url(../img/gui/buttony.png?v=1732022921596) -428px -494px;
             width: 213px;
             height: 1px;
@@ -204,7 +204,29 @@
             margin-top: 2px;
         }
 
-        .yuuki-qw-plus-dis .quest-log .end-line,
+        .yuuki-qw-plus .quests-info-wrapper {
+            color: #e1e1e1;
+            font-size: 11px;
+            align-content: center;
+            text-align: center;
+            line-height: 1;
+            z-index: 1;
+        }
+        .yuuki-qw-plus .quests-info-wrapper .quest-count {
+            font-weight: bold;
+            margin-right: 2px;
+        }
+        .yuuki-qw-plus .hide-collapsed-quests-wrapper {
+            display: flex;
+            position: absolute;
+            top: 2px;
+            right: 24px;
+            color: #e1e1e1;
+            font-size: 11px;
+            align-content: center;
+        }
+
+        .yuuki-qw-plus-dis .end-line,
         .yuuki-qw-plus-dis .border-image,
         .yuuki-qw-plus-dis .increase-opacity,
         .yuuki-qw-plus-dis .toggle-size-button,
@@ -429,15 +451,6 @@
     function createHideCollapsedCheckbox(wnd) {
         const containerDiv = document.createElement('div');
         containerDiv.className = 'hide-collapsed-quests-wrapper';
-        Object.assign(containerDiv.style, {
-            display: 'flex',
-            position: 'absolute',
-            top: '2px',
-            left: '40px',
-            color: '#e1e1e1',
-            fontSize: '11px',
-            alignContent: 'center',
-        });
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -576,28 +589,18 @@
      * @param {HTMLElement} wnd - The quest window element.
      */
     function addInfoContainer(wnd) {
-        const scrollPane = wnd.querySelector('.scroll-pane');
-        const header = wnd.querySelector('.header-label-positioner');
-        if (!scrollPane || !header) return;
+        const content = wnd.querySelector('.content');
+        if (!content) return;
 
         const infoDiv = document.createElement('div');
         infoDiv.className = 'quests-info-wrapper';
-        Object.assign(infoDiv.style, {
-            position: 'absolute',
-            top: '2px',
-            right: '24px',
-            color: '#e1e1e1',
-            fontSize: '11px',
-            alignContent: 'center',
-            lineHeight: '1',
-            zIndex: '1',
-        });
-
         infoDiv.innerHTML = `
-            Wszystkich: <span id="all-quest-count">0</span><br>
-            Zwiniętych: <span id="collapsed-quest-count">0</span>
+            <div class="end-line" style="margin-bottom: 1px;"></div>
+            Aktywne: <span class="quest-count" id="active-quest-count">0</span>
+            Widoczne: <span class="quest-count" id="visible-quest-count">0</span>
+            Ukończone: <span class="quest-count" id="finished-quest-count">0</span>
         `;
-        header.prepend(infoDiv);
+        content.append(infoDiv);
 
         refreshInfoCounts(wnd);
     }
@@ -610,11 +613,13 @@
         const scrollPane = wnd.querySelector('.scroll-pane');
         if (!scrollPane) return;
 
-        const allQuestCount = scrollPane.querySelectorAll('.quest-box').length;
-        const collapsedQuestCount = scrollPane.querySelectorAll('.add-bck.show').length;
+        const activeQuestCount = scrollPane.querySelectorAll('.quest-box').length;
+        const visibleQuestCount = scrollPane.querySelectorAll('.add-bck.hide').length;
+        const finishedQuestCount = Object.keys( Engine.quests.getFinishQuest() ).length;
 
-        document.getElementById('all-quest-count').innerText = allQuestCount.toString();
-        document.getElementById('collapsed-quest-count').innerText = collapsedQuestCount.toString();
+        document.getElementById('active-quest-count').innerText = activeQuestCount.toString();
+        document.getElementById('visible-quest-count').innerText = visibleQuestCount.toString();
+        document.getElementById('finished-quest-count').innerText = finishedQuestCount.toString();
     }
 
     /**
