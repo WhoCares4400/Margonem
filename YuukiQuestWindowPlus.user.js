@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Quest Window+ (QuestW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Odświeżone okno z questami
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -29,7 +29,7 @@
         }
         .yuuki-qw-plus .quest-log {
             width: 100%;
-            padding-bottom: 8px;
+            padding-bottom: 2px;
         }
 
         .yuuki-qw-plus .header-label-positioner {
@@ -271,11 +271,12 @@
 
         customizeWindowAppearance(wnd);
         customizeWindowSize(wnd);
+        openSettings(wnd);
         addEndLines(wnd);
         initializeQuestOrder(wnd);
+        addInfoContainer(wnd);
         initializeHideCollapsedQuests(wnd);
         prependAdditionalButtons(wnd);
-        addInfoContainer(wnd);
         monitorScrollPane(wnd);
 
         // Apply main class to the window based on stored settings
@@ -320,6 +321,7 @@
             wnd.setAttribute('data-opacity-lvl', newOpacity.toString());
             GM_setValue('yk-questOpacityLvl', newOpacity.toString());
         });
+        $(increaseOpacityBtn).tip("Zmień przezroczystość okienka");
         wnd.appendChild(increaseOpacityBtn);
     }
 
@@ -355,7 +357,31 @@
             Engine?.quests?.updateScroll();
             GM_setValue('yk-questWindowHeight', currentHeight.toString());
         });
+        $(toggleSizeBtn).tip("Zmień rozmiar okienka");
         wnd.appendChild(toggleSizeBtn);
+    }
+
+    /**
+     * Oopens settings window with buttons.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function openSettings(wnd) {
+        const settingsBtn = document.createElement('div');
+        settingsBtn.className = 'settings-button';
+        Object.assign(settingsBtn.style, {
+            top: '0',
+            left: '38px',
+            margin: '5px',
+            position: 'absolute',
+        });
+        settingsBtn.addEventListener('click', () => {
+            const btnsWrapper = wnd.querySelector('.additional-btns-wrapper');
+            let isHidden = window.getComputedStyle(btnsWrapper).display === 'none';
+            btnsWrapper.style.display = isHidden ? "block" : "none";
+            GM_setValue('yk-questOptVisible', isHidden ? '1' : '0');
+        });
+        $(settingsBtn).tip("Pokaż/Ukryj przyciski");
+        wnd.appendChild(settingsBtn);
     }
 
     /**
@@ -461,6 +487,7 @@
         checkbox.type = 'checkbox';
         checkbox.id = 'hide-collapsed-quests';
         checkbox.checked = Boolean(parseInt(GM_getValue('yk-questCollapsedHide', '0'), 10));
+        checkbox.style.cursor = 'pointer';
         checkbox.style.zIndex = '1';
 
         // Update quest visibility based on checkbox state
@@ -470,6 +497,7 @@
                 const questBox = btn.closest('.quest-box');
                 questBox?.classList.toggle('quest-hidden', checkbox.checked);
             });
+            refreshInfoCounts(wnd);
             Engine?.quests?.updateScroll();
             GM_setValue('yk-questCollapsedHide', checkbox.checked ? '1' : '0');
         };
@@ -479,9 +507,10 @@
         const label = document.createElement('label');
         label.setAttribute('for', 'hide-collapsed-quests');
         Object.assign(label.style, {
-            lineHeight: '1',
-            zIndex: '1',
             textAlign: 'left',
+            lineHeight: '1',
+            cursor: 'pointer',
+            zIndex: '1',
         });
         label.innerHTML = 'Ukryj<br>zwinięte';
 
@@ -498,13 +527,16 @@
      * @param {HTMLElement} wnd - The quest window element.
      */
     function prependAdditionalButtons(wnd) {
-        const scrollPane = wnd.querySelector('.scroll-pane');
         const header = wnd.querySelector('.header-label-positioner');
-        if (!scrollPane || !header) return;
+        const innerContent = wnd.querySelector('.inner-content');
+        if (!header || !innerContent) return;
 
         const wrapperDiv = document.createElement('div');
         wrapperDiv.className = 'additional-btns-wrapper';
+        wrapperDiv.style.display = Boolean(parseInt(GM_getValue('yk-questOptVisible', '1'), 10)) ? 'block' : 'none';
         wrapperDiv.style.textAlign = 'center';
+        wrapperDiv.style.paddingTop = '5px';
+        wrapperDiv.style.paddingBottom = '2px';
 
         // Expand/Collapse All Button
         const toggleAllBtn = createButton(
@@ -514,7 +546,7 @@
                 const isExpanded = this.getAttribute('data-state') === 'true';
                 this.setAttribute('data-state', String(!isExpanded));
 
-                const targets = scrollPane.querySelectorAll(`.add-bck.${isExpanded ? 'show' : 'hide'}`);
+                const targets = innerContent.querySelectorAll(`.add-bck.${isExpanded ? 'show' : 'hide'}`);
                 targets.forEach((target) => {
                     const questBox = target.closest('.quest-box');
                     questBox?.classList.remove('quest-hidden');
@@ -541,7 +573,7 @@
         disableBtn.style.marginLeft = '2px';
         wrapperDiv.appendChild(disableBtn);
 
-        scrollPane.insertBefore(wrapperDiv, scrollPane.firstChild);
+        innerContent.insertBefore(wrapperDiv, innerContent.firstChild);
 
         // Enable Enhancement Button
         const enableBtn = createButton(
@@ -619,7 +651,7 @@
         if (!scrollPane) return;
 
         const activeQuestCount = scrollPane.querySelectorAll('.quest-box').length;
-        const visibleQuestCount = scrollPane.querySelectorAll('.add-bck.hide').length;
+        const visibleQuestCount = scrollPane.querySelectorAll('.quest-box:not(.quest-hidden)').length;
         const finishedQuestCount = Object.keys( Engine.quests.getFinishQuest() ).length;
 
         document.getElementById('active-quest-count').innerText = activeQuestCount.toString();
