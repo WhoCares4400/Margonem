@@ -132,6 +132,10 @@
             color: #f16462;
             display: inline;
         }
+        .yuuki-qw-plus .quest-log .quest-box .quest-content .q_bring span {
+            color: #3cd9ed;
+            display: inline;
+        }
 
         .yuuki-qw-plus .quest-log .quest-search {
             position: relative;
