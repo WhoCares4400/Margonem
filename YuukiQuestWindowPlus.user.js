@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Quest Window+ (QuestW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  Odświeżone okno z questami
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -189,7 +189,7 @@
             top: 0;
             left: 0;
         }
-        .yuuki-qw-plus .quest-box .info-wrapper .quest-buttons .quest-buttons-wrapper .button > *:not(.add-bck),
+        .yuuki-qw-plus .quest-box .info-wrapper .quest-buttons .quest-buttons-wrapper .button > *:not(.add-bck):not(svg),
         .yuuki-qw-plus .quest-box .info-wrapper .quest-buttons .quest-buttons-wrapper .button::before {
             display: none;
         }
@@ -245,14 +245,21 @@
             display: none !important;
         }
 
-        .yuuki-qw-plus-dis .enable-yuuki-q-btn {
-            display: inline-block;
+        .yuuki-qw-plus-dis .enable-yuuki-q-btn,
+        .yuuki-qw-plus .quest-box.yk-tracked-quest .quest-buttons-wrapper .button.yk-track-btn {
+            display: inline-block !important;
         }
-        .yuuki-qw-plus .enable-yuuki-q-btn {
-            display: none;
+        .yuuki-qw-plus .enable-yuuki-q-btn,
+        .yuuki-qw-plus .quest-box.yk-tracked-quest .quest-buttons-wrapper .button.remove {
+            display: none !important;
         }
         `;
     GM_addStyle(STYLE_CONTENT);
+
+    const intercept = (obj, key, cb, _ = obj[key]) => obj[key] = (...args) => {
+        const result = _.apply(obj, args);
+        return cb(...args) ?? result;
+    };
 
     /**
      * Waits for the quest window to be ready and initializes it.
@@ -281,6 +288,7 @@
         addInfoContainer(wnd);
         initializeHideCollapsedQuests(wnd);
         prependAdditionalButtons(wnd);
+        handleTrackingChange(wnd);
         monitorScrollPane(wnd);
 
         // Apply main class to the window based on stored settings
@@ -462,15 +470,13 @@
         }
 
         scrollPane.addEventListener('click', (event) => {
-            if (event.target.classList.contains('add-bck')) {
+            if (event.target.classList.contains('add-bck') && (event.target.classList.contains('show') || event.target.classList.contains('hide'))) {
+                const questBox = event.target.closest('.quest-box');
                 setTimeout(() => {
-                    const questBox = event.target.closest('.quest-box');
                     if (questBox) {
                         const isChecked = hideCollapsedCheckbox.querySelector('input').checked;
-                        if (event.target.classList.contains('show')) {
-                            questBox.classList.toggle('quest-hidden', isChecked);
-                            Engine?.quests?.updateScroll();
-                        }
+                        questBox.classList.toggle('quest-hidden', isChecked);
+                        Engine?.quests?.updateScroll();
                         refreshInfoCounts(wnd);
                     }
                 }, 0);
@@ -626,6 +632,41 @@
     }
 
     /**
+     * Creates a tracking button.
+     */
+    function createTrackingButton() {
+        const trackingBtn = document.createElement('div');
+        trackingBtn.className = 'button small yk-track-btn';
+        trackingBtn.style.cssText = `
+            display: none;
+            box-shadow: none;
+        `;
+        trackingBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#dbdbdb" style="width: 20px;margin-top: -3px;margin-left: -3px;">
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                <g id="SVGRepo_iconCarrier">
+                    <path d="M12 21C15.5 17.4 19 14.1764 19 10.2C19 6.22355 15.866 3 12 3C8.13401 3 5 6.22355 5 10.2C5 14.1764 8.5 17.4 12 21Z"
+                          stroke="#dbdbdb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z"
+                          stroke="#dbdbdb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </g>
+            </svg>
+        `;
+
+        trackingBtn.addEventListener('click', () => {
+            const targets = Engine?.targets?.check() ?? [null];
+            const position = Object.values(targets)[0]?.objParent;
+            if (position) {
+                Engine.hero.autoGoTo(position);
+            }
+        });
+        $(trackingBtn).tip("Nawiguj do celu");
+
+        return trackingBtn;
+    }
+
+    /**
      * Adds an info container displaying quest counts.
      * @param {HTMLElement} wnd - The quest window element.
      */
@@ -714,6 +755,31 @@
         scrollPane.scrollTop = parseFloat(GM_getValue('yk-questScrollPosition', '0')) || 0;
         scrollPane.addEventListener('scroll', () => {
             GM_setValue('yk-questScrollPosition', scrollPane.scrollTop.toString());
+        });
+    }
+
+    /**
+     * Handles changes of tracked quest.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function handleTrackingChange(wnd) {
+        intercept(Engine.questTracking, 'updateData', (data) => {
+            const prevTrackingQuestBox = wnd.querySelector('.quest-box.yk-tracked-quest');
+            if (prevTrackingQuestBox) {
+                prevTrackingQuestBox.classList.remove('yk-tracked-quest');
+            }
+            if (data.length > 1) {
+                const questId = data[1].split('|')[0];
+                setTimeout(()=>{
+                    const questBox = wnd.querySelector('.quest-box.quest-'+questId);
+                    questBox.classList.add('yk-tracked-quest');
+                    if (!questBox.querySelector('.button.yk-track-btn')) {
+                        const trackingButton = createTrackingButton();
+                        const questButtonsWrapper = questBox.querySelector('.quest-buttons-wrapper');
+                        questButtonsWrapper.insertBefore(trackingButton, questButtonsWrapper.firstChild);
+                    }
+                }, 0);
+            }
         });
     }
 
