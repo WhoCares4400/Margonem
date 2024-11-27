@@ -704,7 +704,7 @@
         [globalLootlog, panelWalk, licznikUbic].forEach(e => {
             if (e) {
                 let offsetBottom = (parseInt(window.getComputedStyle(e).getPropertyValue('bottom')) || 0);
-                e.style.bottom = (offsetBottom + windowHeight)+'px';
+                e.style.bottom = (offsetBottom + windowHeight + 75)+'px';
             }
         });
     }
