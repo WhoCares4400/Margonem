@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -705,8 +705,9 @@
         const globalLootlog = document.getElementById('GLobalLootlogLauncher');
         const panelWalk = document.getElementById('PWLauncher');
         const licznikUbic = document.querySelector(".ga-universal-counter");
+        const clanLootlogs = [...document.querySelectorAll(".cll-launcher")];
 
-        [globalLootlog, panelWalk, licznikUbic].forEach(e => {
+        [globalLootlog, panelWalk, licznikUbic, ...clanLootlogs].forEach(e => {
             if (e) {
                 let offsetBottom = (parseInt(window.getComputedStyle(e).getPropertyValue('bottom')) || 0);
                 e.style.bottom = (offsetBottom + windowHeight + 75)+'px';
