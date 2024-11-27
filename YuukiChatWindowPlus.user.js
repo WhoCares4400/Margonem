@@ -261,6 +261,12 @@
             border: unset;
             box-shadow: unset;
         }
+        .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .increase-opacity,
+        .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-height-button,
+        .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-width-btn,
+        .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-fade-out-button {
+            display: none;
+        }
         `;
 
     const intercept = (obj, key, cb, _ = obj[key]) => obj[key] = (...args) => {
@@ -426,12 +432,17 @@
         const MIN_WIDTH = 300; //px
         const DEFAULT_WIDTH = 550; //px
 
-        const storedWidth = parseInt(GM_getValue('yk-chatWidth', DEFAULT_WIDTH.toString()), 10);
-        const initialWidth = isNaN(storedWidth) ? DEFAULT_WIDTH : storedWidth;
-        wnd.style.width = `${initialWidth}px`;
-        chatWidth = initialWidth;
+        if (enabled) {
+            const storedWidth = parseInt(GM_getValue('yk-chatWidth', DEFAULT_WIDTH.toString()), 10);
+            const initialWidth = isNaN(storedWidth) ? DEFAULT_WIDTH : storedWidth;
+            wnd.style.width = `${initialWidth}px`;
+            chatWidth = initialWidth;
+        }
 
         const resizeObserver = new ResizeObserver(() => {
+            if (!enabled) {
+                return;
+            }
             let storedWidth = parseInt(GM_getValue('yk-chatWidth', DEFAULT_WIDTH.toString()), 10);
             let initialWidth = isNaN(storedWidth) ? DEFAULT_WIDTH : storedWidth;
             wnd.style.width = `${initialWidth}px`;
@@ -531,6 +542,7 @@
             }
         } else {
             enabled = false;
+            wnd.style.width = '';
             wnd.classList.remove("border-window", "transparent", "yk-chat-plus", "fade-out-top");
         }
         alignMessageInput(wnd);
