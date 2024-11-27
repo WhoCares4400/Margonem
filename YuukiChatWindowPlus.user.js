@@ -39,7 +39,6 @@
     var isTyping = false;
     document.addEventListener('keydown', function(e) {
         if (e.keyCode === 13 && enabled) {
-            console.log(enterPressed, 'abcd');
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
