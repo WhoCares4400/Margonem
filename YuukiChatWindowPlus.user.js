@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -35,8 +35,6 @@
     var enabled = false;
     var inBattle = false;
 
-
-
     var enterPressed = false;
     var isTyping = false;
     document.addEventListener('keydown', function(e) {
@@ -50,6 +48,15 @@
             }
             enterPressed = true;
 
+            if (Engine?.hotKeys?.checkCanAcceptAlert() || Engine?.hotKeys?.checkCanAcceptWindow()) {
+                Engine?.hotKeys?.clickHotAcceptInAlert();
+                return;
+            }
+            if (Engine?.loots) {
+                Engine?.hotKeys?.hotAcceptLoot();
+                return;
+            }
+
             const magicInput = document.querySelector('magic_input');
             if (!magicInput) {
                 return;
@@ -58,9 +65,6 @@
             if (!document.querySelector(':focus') && !isTyping) {
                 isTyping = true;
                 $(magicInput).focus();
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
                 return false;
             }
 
