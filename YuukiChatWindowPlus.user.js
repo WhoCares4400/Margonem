@@ -318,13 +318,13 @@
                     setTimeout(()=>{
                         isTyping = false;
                         $(this).blur();
-                    }, 0);
+                    }, 1);
                 });
 
                 setTimeout(()=>{
                     chatToggle(wnd);
                     document.querySelector('.left-column.main-column').style.zIndex = "0";
-                }, 0);
+                }, 1);
             }
         }, 100);
     }
@@ -413,7 +413,7 @@
             chatMessageWrapper.style.height = `${currentHeight}px`;
             borderImage.style.height = currentHeightPercent === 100 ? '' : `${(currentHeight+chatInputWrapperHeight)}px`;
             chatHeight = currentHeight;
-            setTimeout(()=>{alignMessageInput(wnd);},0);
+            setTimeout(()=>{alignMessageInput(wnd);},1);
 
             message(`Aktualna wysokość: ${currentHeightPercent}%`);
             GM_setValue('yk-chatHeight', currentHeightPercent.toString());
@@ -473,7 +473,7 @@
             currentWidth = currentWidth >= MAX_WIDTH ? MIN_WIDTH : currentWidth + WIDTH_INCREMENT;
             wnd.style.width = `${currentWidth}px`;
             chatWidth = currentWidth;
-            setTimeout(()=>{alignMessageInput(wnd);},0);
+            setTimeout(()=>{alignMessageInput(wnd);},1);
 
             message(`Aktualna szerokość: ${currentWidth}px`);
             GM_setValue('yk-chatWidth', currentWidth.toString());
@@ -545,7 +545,7 @@
             wnd.style.width = '';
             wnd.classList.remove("border-window", "transparent", "yk-chat-plus", "fade-out-top");
         }
-        alignMessageInput(wnd);
+        setTimeout(()=>{alignMessageInput(wnd);},100);
     }
 
     /**
@@ -647,7 +647,7 @@
         if (!bgAdditionalWidgetLeft) return;
 
         const resizeObserver = new ResizeObserver(() => {
-            setTimeout(()=>{alignMessageInput(wnd);},0);
+            setTimeout(()=>{alignMessageInput(wnd);},1);
         });
 
         resizeObserver.observe(bgAdditionalWidgetLeft);
@@ -677,7 +677,7 @@
         function onBattleChange(state) {
             if (inBattle !== state) {
                 inBattle = state;
-                setTimeout(()=>{alignMessageInput(wnd);},0);
+                setTimeout(()=>{alignMessageInput(wnd);},1);
             }
         }
 
