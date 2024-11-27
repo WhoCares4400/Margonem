@@ -716,7 +716,7 @@
 
     /**
      * Helper function to check if elements are visible in DOM.
-     * @param {HTMLElement} wnd - The quest window element.
+     * @param {HTMLElement} element - The element that is being checked.
      */
     function isElementVisible(element) {
         if (!element) return false;
@@ -724,7 +724,6 @@
         const rect = element.getBoundingClientRect();
         const style = getComputedStyle(element);
 
-        // Check if the element is in the DOM, has size, and is not hidden or collapsed
         return (
             rect.width > 0 &&
             rect.height > 0 &&
