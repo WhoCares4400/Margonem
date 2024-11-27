@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -28,7 +28,7 @@
     const chatInputWrapperHeight = 57;
 
     var fadeOutTop = Boolean(parseInt(GM_getValue('yk-chatFadeOutTop', '1'), 10));
-    const windowHeight = fadeOutTop ? fadeOutWindowHeight : normalWindowHeight;
+    var windowHeight = fadeOutTop ? fadeOutWindowHeight : normalWindowHeight;
 
     var chatHeight;
     var chatWidth;
@@ -324,6 +324,10 @@
                 setTimeout(()=>{
                     chatToggle(wnd);
                     document.querySelector('.left-column.main-column').style.zIndex = "0";
+
+                    setTimeout(() => {
+                        handleOtherChatAddons();
+                    }, 1000);
                 }, 1);
             }
         }, 100);
@@ -512,6 +516,9 @@
         toggleFadeOutBtn.addEventListener('click', () => {
             fadeOutTop = !fadeOutTop;
             wnd.classList[fadeOutTop ? "add" : "remove"]("fade-out-top");
+
+            windowHeight = fadeOutTop ? fadeOutWindowHeight : normalWindowHeight;
+
             updateChatScroll(wnd);
             GM_setValue('yk-chatFadeOutTop', fadeOutTop ? '1' : '0');
         });
@@ -559,7 +566,8 @@
             }
 
             const excluded = ["chat-channel-card", "chat-channel-card-icon", "magic-input", "card-name", "card-remove", "link", "chat-config-wrapper", "chat-config-wrapper-button", "increase-opacity", "toggle-height-button", "toggle-width-btn", "toggle-fade-out-button", "click-able"];
-            if (excluded.some(className => e.target.classList.contains(className) || e.target.parentElement.classList.contains(className))) {
+            if (excluded.some(className => e.target.classList.contains(className) || e.target.closest('.'+className))) {
+                e.preventDefault();
                 return;
             }
 
@@ -682,6 +690,23 @@
         }
 
         watchBattlePropertyChanges(battle, "show", onBattleChange);
+    }
+
+    /**
+     * Handles other addons that collide with the chat window.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function handleOtherChatAddons() {
+        const globalLootlog = document.getElementById('GLobalLootlogLauncher');
+        const panelWalk = document.getElementById('PWLauncher');
+        const licznikUbic = document.querySelector(".ga-universal-counter");
+
+        [globalLootlog, panelWalk, licznikUbic].forEach(e => {
+            if (e) {
+                let offsetBottom = (parseInt(window.getComputedStyle(e).getPropertyValue('bottom')) || 0);
+                e.style.bottom = (offsetBottom + windowHeight)+'px';
+            }
+        });
     }
 
     // Start the script
