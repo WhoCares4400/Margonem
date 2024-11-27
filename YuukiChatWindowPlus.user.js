@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -417,7 +417,7 @@
             chatMessageWrapper.style.height = `${currentHeight}px`;
             borderImage.style.height = currentHeightPercent === 100 ? '' : `${(currentHeight+chatInputWrapperHeight)}px`;
             chatHeight = currentHeight;
-            setTimeout(()=>{alignMessageInput(wnd);},1);
+            setTimeout(()=>{alignMessageInput(wnd);},100);
 
             message(`Aktualna wysokość: ${currentHeightPercent}%`);
             GM_setValue('yk-chatHeight', currentHeightPercent.toString());
@@ -477,7 +477,7 @@
             currentWidth = currentWidth >= MAX_WIDTH ? MIN_WIDTH : currentWidth + WIDTH_INCREMENT;
             wnd.style.width = `${currentWidth}px`;
             chatWidth = currentWidth;
-            setTimeout(()=>{alignMessageInput(wnd);},1);
+            setTimeout(()=>{alignMessageInput(wnd);},100);
 
             message(`Aktualna szerokość: ${currentWidth}px`);
             GM_setValue('yk-chatWidth', currentWidth.toString());
@@ -614,9 +614,14 @@
         let buttonOffset = (parseInt(bgAdditionalWidgetLeft?.style?.width) || 0);
         let inputToSmall = minLengthDifference >= (chatWidth - buttonOffset);
         if (wnd.classList.contains("yk-chat-plus") && !inputToSmall) {
-            magicInputWrapper.style.marginLeft = `${buttonOffset - 64}px`;
-            menuCard.style.marginLeft = `${buttonOffset - 133}px`;
-            listCard.style.marginLeft = `${buttonOffset - 133}px`;
+            let bottomBarVisible = isElementVisible(bgAdditionalWidgetLeft);
+
+            let magicInputMargin = buttonOffset - 64;
+            let cardMargin = buttonOffset - 133;
+
+            magicInputWrapper.style.marginLeft = bottomBarVisible ? `${magicInputMargin}px` : '';
+            menuCard.style.marginLeft = bottomBarVisible ? `${cardMargin}px` : '';
+            listCard.style.marginLeft = bottomBarVisible ? `${cardMargin}px` : '';
         } else {
             magicInputWrapper.style.marginLeft = '';
             menuCard.style.marginLeft = '';
@@ -655,7 +660,7 @@
         if (!bgAdditionalWidgetLeft) return;
 
         const resizeObserver = new ResizeObserver(() => {
-            setTimeout(()=>{alignMessageInput(wnd);},1);
+            setTimeout(()=>{alignMessageInput(wnd);},100);
         });
 
         resizeObserver.observe(bgAdditionalWidgetLeft);
@@ -685,7 +690,7 @@
         function onBattleChange(state) {
             if (inBattle !== state) {
                 inBattle = state;
-                setTimeout(()=>{alignMessageInput(wnd);},1);
+                setTimeout(()=>{alignMessageInput(wnd);},100);
             }
         }
 
@@ -707,6 +712,25 @@
                 e.style.bottom = (offsetBottom + windowHeight + 75)+'px';
             }
         });
+    }
+
+    /**
+     * Helper function to check if elements are visible in DOM.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function isElementVisible(element) {
+        if (!element) return false;
+
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+
+        // Check if the element is in the DOM, has size, and is not hidden or collapsed
+        return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            style.visibility !== 'hidden' &&
+            style.display !== 'none'
+        );
     }
 
     // Start the script
