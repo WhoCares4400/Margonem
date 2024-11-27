@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -23,8 +23,20 @@
 (function () {
     'use strict';
 
+    const normalWindowHeight = 297;
+    const fadeOutWindowHeight = 309;
+    const chatInputWrapperHeight = 57;
+
+    var fadeOutTop = Boolean(parseInt(GM_getValue('yk-chatFadeOutTop', '1'), 10));
+    const windowHeight = fadeOutTop ? fadeOutWindowHeight : normalWindowHeight;
+
+    var chatHeight;
+    var chatWidth;
+
     var enabled = false;
     var inBattle = false;
+
+
 
     var enterPressed = false;
     var isTyping = false;
@@ -65,10 +77,13 @@
             display: block!important;
         }
         .chat-size-0 .yk-chat-plus {
+            width: 550px;
             bottom: 0!important;
             top: auto;
-            width: 550px;
-            height: 309px;
+            height: ${normalWindowHeight}px;
+        }
+        .chat-size-0 .yk-chat-plus.fade-out-top {
+            height: ${fadeOutWindowHeight}px;
         }
         .chat-size-0 .yk-chat-plus .chat-input-wrapper {
             width: 100%;
@@ -100,40 +115,45 @@
             border-radius: 2px;
         }
         .chat-size-0 .yk-chat-plus.border-window.transparent .scroll-wrapper {
+            flex-grow: 0;
+            margin-top: auto;
             margin-left: 33px;
         }
         .chat-size-0 .yk-chat-plus .new-chat-message.expired-message {
             opacity: 0.75;
         }
         .chat-size-0 .yk-chat-plus .chat-info-wrapper {
-            right: 48px;
+            right: -10px;
         }
         .chat-size-0 .yk-chat-plus .chat-config-wrapper {
-            right: 19px;
+            right: 77px;
+        }
+        .chat-size-0 .yk-chat-plus .chat-config-wrapper,
+        .chat-size-0 .yk-chat-plus .chat-config-wrapper > *{
+            width: 20px!important;
+        }
+        .chat-size-0 .yk-chat-plus .border-image {
+            margin-top: auto !important;
         }
 
-        .chat-size-0 .yk-chat-plus .scroll-wrapper {
+        .chat-size-0 .yk-chat-plus.fade-out-top .scroll-wrapper {
             mask-image: linear-gradient(to bottom, transparent, black 26px, #000000);
             -webkit-mask-image: linear-gradient(to bottom, transparent, black 26px, #000000);
         }
-        .chat-size-0 .yk-chat-plus .border-image {
+        .chat-size-0 .yk-chat-plus.fade-out-top .border-image {
             mask-image: linear-gradient(to bottom, transparent, black 28px, #000000);
             -webkit-mask-image: linear-gradient(to bottom, transparent, black 28px, #000000);
         }
-        .chat-size-0 .yk-chat-plus .chat-channel-card-wrapper {
-            margin-top: 12px !important;
+        .chat-size-0 .yk-chat-plus.fade-out-top .chat-channel-card-wrapper {
+            margin-top: 12px;
         }
-        .chat-size-0 .yk-chat-plus .scrollbar-wrapper {
+        .chat-size-0 .yk-chat-plus.fade-out-top .scrollbar-wrapper {
             margin-top: 20px !important;
         }
-        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper {
+        .chat-size-0 .yk-chat-plus.fade-out-top .scroll-wrapper .scrollbar-wrapper {
             height: calc(100% - 20px);
         }
-
-        .chat-size-0 .yk-chat-plus .border-image {
-            margin-top: 6px !important;
-        }
-        .chat-size-0 .yk-chat-plus .border-image {
+        .chat-size-0 .yk-chat-plus.fade-out-top .border-image {
             height: calc(100% - 6px);
         }
 
@@ -163,6 +183,7 @@
         }
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle,
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle {
+            height: 18px;
             background: wheat!important;
             border-radius: 4px!important;
         }
@@ -268,6 +289,10 @@
         if (!wnd) return;
 
         customizeWindowAppearance(wnd);
+        customizeChatHeight(wnd);
+        customizeChatWidth(wnd);
+        toggleFadeOutTop(wnd);
+
         handleChatToggle(wnd);
         hangleChatClick(wnd);
         handleMessageInputAlignment(wnd);
@@ -315,14 +340,12 @@
         wnd.setAttribute('data-opacity-lvl', opacityLevel.toString());
 
         // Create opacity control button
-        const relativeDiv = document.createElement('div');
-
         const increaseOpacityBtn = document.createElement('div');
         increaseOpacityBtn.className = 'increase-opacity';
         Object.assign(increaseOpacityBtn.style, {
             top: '6px',
             left: 'auto',
-            right: '0',
+            right: '6px',
             position: 'absolute',
         });
         increaseOpacityBtn.addEventListener('click', () => {
@@ -334,6 +357,155 @@
         });
         $(increaseOpacityBtn).tip("Zmień przezroczystość okienka");
         wnd.querySelector('.chat-input-wrapper .control-wrapper').appendChild(increaseOpacityBtn);
+    }
+
+    /**
+     * Adds functionality to change height of the chat window.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function customizeChatHeight(wnd) {
+        const HEIGHT_INCREMENT = 10; //%
+        const MAX_HEIGHT = 100; //%
+        const MIN_HEIGHT = 10; //%
+        const DEFAULT_HEIGHT = 100; //%
+
+        const chatMessageWrapper = wnd.querySelector('.chat-message-wrapper');
+        if (!chatMessageWrapper) return;
+        const borderImage = wnd.querySelector('.border-image');
+
+        let maxChatHeight = windowHeight - chatInputWrapperHeight;
+
+        const storedHeightPercent = parseInt(GM_getValue('yk-chatHeight', DEFAULT_HEIGHT.toString()), 10);
+        const initialHeightPercent = isNaN(storedHeightPercent) ? DEFAULT_HEIGHT : storedHeightPercent;
+        const initialHeight = (maxChatHeight * (initialHeightPercent/100));
+        chatMessageWrapper.style.height = `${initialHeight}px`;
+        borderImage.style.height = initialHeightPercent === 100 ? '' : `${(initialHeight+chatInputWrapperHeight)}px`;
+        chatHeight = initialHeight;
+
+        const toggleHeightBtn = document.createElement('div');
+        toggleHeightBtn.className = 'toggle-height-button';
+        Object.assign(toggleHeightBtn.style, {
+            top: '0',
+            right: '18px',
+            margin: '5px',
+            position: 'absolute',
+            cursor: 'url(../img/gui/cursor/5n.png?v=1732624602172) 4 0, url(../img/gui/cursor/5n.cur?v=1732624602172) 4 0, auto',
+        });
+        toggleHeightBtn.innerHTML = `
+<svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+  <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+  <g id="SVGRepo_iconCarrier">
+    <path d="M12 22V2M12 22L8 18M12 22L16 18M12 2L8 6M12 2L16 6" stroke="#dbdbdb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  </g>
+</svg>
+`;
+        toggleHeightBtn.addEventListener('click', () => {
+            let currentHeightPercent = Math.round((parseInt(chatMessageWrapper.style.height, 10)/maxChatHeight)*100) || DEFAULT_HEIGHT;
+            currentHeightPercent = currentHeightPercent >= MAX_HEIGHT ? MIN_HEIGHT : currentHeightPercent + HEIGHT_INCREMENT;
+            let currentHeight = (maxChatHeight * (currentHeightPercent/100));
+            chatMessageWrapper.style.height = `${currentHeight}px`;
+            borderImage.style.height = currentHeightPercent === 100 ? '' : `${(currentHeight+chatInputWrapperHeight)}px`;
+            chatHeight = currentHeight;
+            setTimeout(()=>{alignMessageInput(wnd);},0);
+
+            message(`Aktualna wysokość: ${currentHeightPercent}%`);
+            GM_setValue('yk-chatHeight', currentHeightPercent.toString());
+        });
+        $(toggleHeightBtn).tip("Zmień wysokość chatu");
+        wnd.querySelector('.chat-input-wrapper .control-wrapper').appendChild(toggleHeightBtn);
+    }
+
+    /**
+     * Adds functionality to change width of the chat window.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function customizeChatWidth(wnd) {
+        const WIDTH_INCREMENT = 50; //px
+        const MAX_WIDTH = 700; //px
+        const MIN_WIDTH = 300; //px
+        const DEFAULT_WIDTH = 550; //px
+
+        const storedWidth = parseInt(GM_getValue('yk-chatWidth', DEFAULT_WIDTH.toString()), 10);
+        const initialWidth = isNaN(storedWidth) ? DEFAULT_WIDTH : storedWidth;
+        wnd.style.width = `${initialWidth}px`;
+        chatWidth = initialWidth;
+
+        const resizeObserver = new ResizeObserver(() => {
+            let storedWidth = parseInt(GM_getValue('yk-chatWidth', DEFAULT_WIDTH.toString()), 10);
+            let initialWidth = isNaN(storedWidth) ? DEFAULT_WIDTH : storedWidth;
+            wnd.style.width = `${initialWidth}px`;
+            chatWidth = initialWidth;
+        });
+        resizeObserver.observe(wnd);
+
+        const toggleWidthBtn = document.createElement('div');
+        toggleWidthBtn.className = 'toggle-width-btn';
+        Object.assign(toggleWidthBtn.style, {
+            top: '0',
+            right: '34px',
+            margin: '5px',
+            position: 'absolute',
+            cursor: 'url(../img/gui/cursor/5n.png?v=1732624602172) 4 0, url(../img/gui/cursor/5n.cur?v=1732624602172) 4 0, auto',
+        });
+        toggleWidthBtn.innerHTML = `
+<svg width="15px" height="15px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#dbdbdb">
+  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+  <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+  <g id="SVGRepo_iconCarrier">
+    <path d="M22 12H2M22 12L18 16M22 12L18 8M2 12L6 16M2 12L6 8" stroke="#dbdbdb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+  </g>
+</svg>
+`;
+        toggleWidthBtn.addEventListener('click', () => {
+            let currentWidth = parseInt(wnd.style.width, 10) || DEFAULT_WIDTH;
+            currentWidth = currentWidth >= MAX_WIDTH ? MIN_WIDTH : currentWidth + WIDTH_INCREMENT;
+            wnd.style.width = `${currentWidth}px`;
+            chatWidth = currentWidth;
+            setTimeout(()=>{alignMessageInput(wnd);},0);
+
+            message(`Aktualna szerokość: ${currentWidth}px`);
+            GM_setValue('yk-chatWidth', currentWidth.toString());
+        });
+        $(toggleWidthBtn).tip("Zmień szerokość chatu");
+        wnd.querySelector('.chat-input-wrapper .control-wrapper').appendChild(toggleWidthBtn);
+    }
+
+    /**
+     * Adds functionality to toggle fading out of window top edge.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function toggleFadeOutTop(wnd) {
+        const toggleFadeOutBtn = document.createElement('div');
+        toggleFadeOutBtn.className = 'toggle-fade-out-button';
+        Object.assign(toggleFadeOutBtn.style, {
+            top: '0',
+            right: '53px',
+            margin: '2px',
+            position: 'absolute',
+            cursor: 'url(../img/gui/cursor/5n.png?v=1732624602172) 4 0, url(../img/gui/cursor/5n.cur?v=1732624602172) 4 0, auto',
+        });
+        toggleFadeOutBtn.innerHTML = `
+<svg width="21px" height="21px" viewBox="0 0 76 76" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" enable-background="new 0 0 76.00 76.00" xml:space="preserve" fill="#dbdbdb">
+  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+  <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+  <g id="SVGRepo_iconCarrier">
+    <linearGradient id="SVGID_Fill1_" gradientUnits="objectBoundingBox" x1="0.853553" y1="0.853553" x2="1.85355" y2="0.853553" gradientTransform="rotate(225.000000 0.853553 0.853553)">
+      <stop offset="0" stop-color="#dbdbdb" stop-opacity="0"></stop>
+      <stop offset="1" stop-color="#dbdbdb" stop-opacity="1"></stop>
+    </linearGradient>
+    <path fill="url(#SVGID_Fill1_)" stroke-width="0.2" stroke-linejoin="round" d="M 19,19L 25.3333,19L 25.3333,25.3333L 31.6667,25.3333L 31.6667,19L 38,19L 38,25.3333L 44.3333,25.3333L 44.3333,19L 50.6667,19L 50.6667,25.3333L 57,25.3333L 57,31.6667L 50.6667,31.6667L 50.6667,38L 57,38L 57,44.3333L 50.6667,44.3333L 50.6667,50.6667L 57,50.6667L 57,57L 50.6667,57L 50.6667,50.6667L 44.3333,50.6667L 44.3333,57L 38,57L 38,50.6667L 31.6667,50.6667L 31.6667,57L 25.3333,57L 25.3333,50.6667L 19,50.6667L 19,44.3333L 25.3333,44.3333L 25.3333,38L 19,38L 19,31.6667L 25.3333,31.6667L 25.3333,25.3333L 19,25.3333L 19,19 Z M 50.6667,38L 44.3333,38L 44.3333,44.3333L 50.6667,44.3333L 50.6667,38 Z M 50.6667,25.3333L 44.3333,25.3333L 44.3333,31.6667L 50.6667,31.6667L 50.6667,25.3333 Z M 44.3333,44.3333L 38,44.3333L 38,50.6667L 44.3333,50.6667L 44.3333,44.3333 Z M 38,44.3333L 38,38L 31.6667,38L 31.6667,44.3333L 38,44.3333 Z M 31.6667,44.3333L 25.3333,44.3333L 25.3333,50.6667L 31.6667,50.6667L 31.6667,44.3333 Z M 44.3333,31.6667L 38,31.6667L 38,38L 44.3333,38L 44.3333,31.6667 Z M 38,31.6667L 38,25.3333L 31.6667,25.3333L 31.6666,31.6667L 38,31.6667 Z M 31.6666,31.6667L 25.3333,31.6667L 25.3333,38L 31.6667,38L 31.6666,31.6667 Z "></path>
+  </g>
+</svg>
+        `;
+        toggleFadeOutBtn.addEventListener('click', () => {
+            fadeOutTop = !fadeOutTop;
+            wnd.classList[fadeOutTop ? "add" : "remove"]("fade-out-top");
+            updateChatScroll(wnd);
+            GM_setValue('yk-chatFadeOutTop', fadeOutTop ? '1' : '0');
+        });
+        $(toggleFadeOutBtn).tip("Włącz/Wyłącz zanikanie górnej krawędzi chatu");
+        wnd.querySelector('.chat-input-wrapper .control-wrapper').appendChild(toggleFadeOutBtn);
     }
 
     /**
@@ -354,9 +526,12 @@
         if (document.querySelector('.game-window-positioner').classList.contains('chat-size-0')) {
             enabled = true;
             wnd.classList.add("border-window", "transparent", "yk-chat-plus");
+            if (fadeOutTop) {
+                wnd.classList.add("fade-out-top");
+            }
         } else {
             enabled = false;
-            wnd.classList.remove("border-window", "transparent", "yk-chat-plus");
+            wnd.classList.remove("border-window", "transparent", "yk-chat-plus", "fade-out-top");
         }
         alignMessageInput(wnd);
     }
@@ -371,8 +546,8 @@
                 return;
             }
 
-            const excluded = ["chat-channel-card", "chat-channel-card-icon", "magic-input", "card-name", "card-remove", "link", "chat-config-wrapper-button", "increase-opacity", "click-able"];
-            if (excluded.some(className => e.target.classList.contains(className))) {
+            const excluded = ["chat-channel-card", "chat-channel-card-icon", "magic-input", "card-name", "card-remove", "link", "chat-config-wrapper", "chat-config-wrapper-button", "increase-opacity", "toggle-height-button", "toggle-width-btn", "toggle-fade-out-button", "click-able"];
+            if (excluded.some(className => e.target.classList.contains(className) || e.target.parentElement.classList.contains(className))) {
                 return;
             }
 
@@ -410,25 +585,44 @@
      */
     function alignMessageInput(wnd) {
         const magicInputWrapper = wnd.querySelector('.chat-input-wrapper .magic-input-wrapper');
+        const bgAdditionalWidgetLeft = document.querySelector('.bg-additional-widget-left');
         const menuCard = wnd.querySelector('.chat-input-wrapper .menu-card');
         const listCard = wnd.querySelector('.chat-input-wrapper .card-list');
         const minWindowWidth = 1625;
-        let smallBattleScreen = (inBattle && minWindowWidth > window.innerWidth);
-        if (wnd.classList.contains("yk-chat-plus") && !smallBattleScreen) {
-            const buttonOffset = (parseInt(document.querySelector('.bottom-left-additional')?.lastChild?.style?.left) || 0);
-            magicInputWrapper.style.marginLeft = `${buttonOffset + 98}px`;
-            menuCard.style.marginLeft = `${buttonOffset + 64}px`;
-            listCard.style.marginLeft = `${buttonOffset + 64}px`;
+        const minLengthDifference = 100;
+
+        let buttonOffset = (parseInt(bgAdditionalWidgetLeft?.style?.width) || 0);
+        let inputToSmall = minLengthDifference >= (chatWidth - buttonOffset);
+        if (wnd.classList.contains("yk-chat-plus") && !inputToSmall) {
+            magicInputWrapper.style.marginLeft = `${buttonOffset - 64}px`;
+            menuCard.style.marginLeft = `${buttonOffset - 133}px`;
+            listCard.style.marginLeft = `${buttonOffset - 133}px`;
         } else {
             magicInputWrapper.style.marginLeft = '';
             menuCard.style.marginLeft = '';
             listCard.style.marginLeft = '';
         }
 
-        wnd.style.paddingBottom = smallBattleScreen ? (wnd.style.bottom ?? '') : '';
-        wnd.style.height = smallBattleScreen ? '260px' : '';
-        wnd.style.width = smallBattleScreen ? '410px' : '';
+        const borderImage = wnd.querySelector('.border-image');
+        if (inputToSmall) {
+            let additionalOffset = (parseInt(wnd?.style?.bottom) || 0);
+            wnd.style.paddingBottom = additionalOffset+'px';
+            borderImage.style.paddingTop = borderImage.style.height ? additionalOffset+'px' : '';
+        } else {
+            wnd.style.paddingBottom = '';
+            borderImage.style.paddingTop = '';
+        }
 
+        let smallBattleScreen = (inBattle && minWindowWidth > window.innerWidth);
+
+        updateChatScroll(wnd);
+    }
+
+    /**
+     * Updates chat scroll position.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function updateChatScroll(wnd) {
         $(".scroll-wrapper", $(wnd)).trigger("update");
     }
 
@@ -437,14 +631,14 @@
      * @param {HTMLElement} wnd - The quest window element.
      */
     function handleMessageInputAlignment(wnd) {
-        const bottomLeftBtnWrapper = document.querySelector('.bottom-left-additional');
-        if (!bottomLeftBtnWrapper) return;
+        const bgAdditionalWidgetLeft = document.querySelector('.bg-additional-widget-left');
+        if (!bgAdditionalWidgetLeft) return;
 
-        const observer = new MutationObserver((mutations) => {
-            alignMessageInput(wnd);
+        const resizeObserver = new ResizeObserver(() => {
+            setTimeout(()=>{alignMessageInput(wnd);},0);
         });
 
-        observer.observe(bottomLeftBtnWrapper, { childList: true });
+        resizeObserver.observe(bgAdditionalWidgetLeft);
     }
 
     /**
@@ -471,7 +665,7 @@
         function onBattleChange(state) {
             if (inBattle !== state) {
                 inBattle = state;
-                alignMessageInput(wnd);
+                setTimeout(()=>{alignMessageInput(wnd);},0);
             }
         }
 
