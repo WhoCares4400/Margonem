@@ -12,7 +12,6 @@
 // @exclude      http*://forum.margonem.*/*
 // @exclude      http*://commons.margonem.*/*
 // @exclude      http*://dev-commons.margonem.*/*
-// @require      https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.3/Sortable.min.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=margonem.pl
 // @grant        GM_addStyle
 // @grant        GM_getValue
