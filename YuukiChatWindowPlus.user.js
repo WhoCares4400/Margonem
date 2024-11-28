@@ -52,10 +52,6 @@
                 Engine?.hotKeys?.clickHotAcceptInAlert();
                 return;
             }
-            if (Engine?.loots?.itemsDecisionExist()) {
-                Engine?.hotKeys?.hotAcceptLoot();
-                return;
-            }
 
             const magicInput = document.querySelector('magic_input');
             if (!magicInput) {
