@@ -77,13 +77,13 @@
 
     const STYLE_CONTENT = `
         .chat-size-0 .left-column.main-column {
-            display: block!important;
+            display: block !important;
         }
         .chat-size-0 .yk-chat-plus {
             height: ${normalWindowHeight}px;
             width: 550px;
             top: auto;
-            bottom: 0!important;
+            bottom: 0 !important;
             pointer-events: none;
         }
         .chat-size-0 .yk-chat-plus > * {
@@ -96,21 +96,21 @@
             width: 100%;
         }
         .chat-size-0 .yk-chat-plus .chat-input-wrapper > * {
-            margin: 0 16px 0 34px;
+            margin: 0 1rem 0 2rem;
         }
         .chat-size-0 .yk-chat-plus .magic-input-wrapper {
-            margin-bottom: 8px;
+            margin-bottom: 0.5rem;
         }
         .chat-size-0 .yk-chat-plus .chat-input-wrapper .magic-input-placeholder {
-            color: #c9c9c9!important;
-            height: 17px;
+            color: #c9c9c9 !important;
+            height: 1rem;
             overflow: hidden;
         }
         .chat-size-0 .yk-chat-plus .chat-input-wrapper .magic-input {
-            box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 3px 3px inset!important;
+            box-shadow: inset 0 0 3px 3px rgba(0, 0, 0, 0.3) !important;
         }
         .chat-size-0 .yk-chat-plus .scroll-wrapper.chat-message-wrapper.scrollable {
-            position: relative!important;
+            position: relative !important;
         }
         .chat-size-0 .yk-chat-plus .chat-channel-card-wrapper {
             position: absolute;
@@ -118,13 +118,12 @@
             flex-direction: column;
         }
         .chat-size-0 .yk-chat-plus .chat-channel-card-wrapper .chat-channel-card {
-            background: #00000052;
+            background: rgba(0, 0, 0, 0.32);
             border-radius: 2px;
         }
         .chat-size-0 .yk-chat-plus.border-window.transparent .scroll-wrapper {
             flex-grow: 0;
-            margin-top: auto;
-            margin-left: 33px;
+            margin: auto 0 0 33px;
         }
         .chat-size-0 .yk-chat-plus .new-chat-message.expired-message {
             opacity: 0.75;
@@ -136,37 +135,40 @@
             right: 77px;
         }
         .chat-size-0 .yk-chat-plus .chat-config-wrapper,
-        .chat-size-0 .yk-chat-plus .chat-config-wrapper > *{
-            width: 20px!important;
+        .chat-size-0 .yk-chat-plus .chat-config-wrapper > * {
+            width: 20px !important;
         }
         .chat-size-0 .yk-chat-plus .border-image {
             margin-top: auto !important;
         }
 
-        .chat-size-0 .yk-chat-plus.fade-out-top .scroll-wrapper {
-            mask-image: linear-gradient(to bottom, transparent, black 26px, #000000);
-            -webkit-mask-image: linear-gradient(to bottom, transparent, black 26px, #000000);
+        /* fade-out top styles */
+        .chat-size-0 .yk-chat-plus.fade-out-top .scroll-wrapper,
+        .chat-size-0 .yk-chat-plus.fade-out-top .border-image {
+            mask-image: linear-gradient(to bottom, transparent, black 26px, #000);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 26px, #000);
         }
         .chat-size-0 .yk-chat-plus.fade-out-top .border-image {
-            mask-image: linear-gradient(to bottom, transparent, black 28px, #000000);
-            -webkit-mask-image: linear-gradient(to bottom, transparent, black 28px, #000000);
+            mask-image: linear-gradient(to bottom, transparent, black 28px, #000);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 28px, #000);
         }
         .chat-size-0 .yk-chat-plus.fade-out-top .chat-channel-card-wrapper {
-            margin-top: 12px;
+            margin-top: 0.75rem;
         }
         .chat-size-0 .yk-chat-plus.fade-out-top .scrollbar-wrapper {
-            margin-top: 20px !important;
+            margin-top: 1.25rem !important;
         }
         .chat-size-0 .yk-chat-plus.fade-out-top .scroll-wrapper .scrollbar-wrapper {
-            height: calc(100% - 20px);
+            height: calc(100% - 1.25rem);
         }
         .chat-size-0 .yk-chat-plus.fade-out-top .border-image {
-            height: calc(100% - 6px);
+            height: calc(100% - 0.375rem);
         }
 
-
-        /* Scroll */
+        /* scroll styles */
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper {
+            height: 100%;
+            width: 0.375rem;
             right: 0;
             margin-left: 33px;
         }
@@ -176,41 +178,30 @@
         .chat-size-0 .yk-chat-plus:not(:hover) .scrollbar-wrapper:not(:active) {
             visibility: hidden;
         }
-
-        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper {
-            width: 5px;
-            right: 0;
-        }
-        .chat-size-0 .yk-chat-plus .scroll-wrapper.scrollable .scroll-pane,
         .chat-size-0 .yk-chat-plus .scroll-wrapper.scrollable .scroll-pane {
-            padding-right: 8px;
-        }
-        .chat-size-0 .yk-chat-plus .scroll-pane {
+            padding-right: 0.5rem;
             line-height: 0.8rem;
         }
-        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle,
-        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle {
-            height: 18px;
-            background: wheat!important;
-            border-radius: 4px!important;
-        }
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track,
-        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle,
-        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle,
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .arrow-up,
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .arrow-down,
-        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track {
-            width: 100%!important;
+        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle {
+            width: 100% !important;
+        }
+        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle {
+            height: 1.125rem;
+            background: wheat !important;
+            border-radius: 4px !important;
         }
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .arrow-up,
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .arrow-down {
-            background: unset;
-            color: wheat!important;
+            height: 0.625rem;
+            background: none;
+            color: wheat !important;
             font-weight: bold;
-            margin-left: -3px;
-            font-size: 10px;
-            height: 10px;
+            font-size: 0.8rem;
             left: 0;
+            margin-left: -0.125rem;
             transform: rotate(-90deg);
         }
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .arrow-up::before {
@@ -227,23 +218,21 @@
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .background {
             left: -1px;
         }
-        .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle,
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper .track .handle {
             background: none;
-            border-image: none;
-            border-color: transparent;
+            border: none;
         }
 
-        /* Background */
+        /* background opacity levels */
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="0"]:hover:not(:has(.increase-opacity:hover)) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="0"]:has(.magic-input:active) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="0"]:has(.magic-input:focus) .border-image {
-            opacity: 0.6!important;
+            opacity: 0.6 !important;
         }
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="1"]:hover:not(:has(.increase-opacity:hover)) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="1"]:has(.magic-input:active) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="1"]:has(.magic-input:focus) .border-image {
-            opacity: 0.8!important;
+            opacity: 0.8 !important;
         }
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="2"]:hover:not(:has(.increase-opacity:hover)) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="2"]:has(.magic-input:active) .border-image,
@@ -251,10 +240,10 @@
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="3"]:hover:not(:has(.increase-opacity:hover)) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="3"]:has(.magic-input:active) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="3"]:has(.magic-input:focus) .border-image {
-            opacity: 1!important;
+            opacity: 1 !important;
         }
 
-        /* Other */
+        /* reset styles */
         .chat-size-0 .yk-chat-plus,
         .chat-size-0 .yk-chat-plus .chat-message-wrapper,
         .chat-size-0 .yk-chat-plus .chat-channel-card-wrapper,
@@ -262,11 +251,10 @@
         .chat-size-0 .yk-chat-plus .chat-input-wrapper .magic-input-wrapper,
         .chat-size-0 .yk-chat-plus .chat-input-wrapper .magic-input-wrapper .magic-input,
         .chat-size-0 .yk-chat-plus .chat-input-wrapper .control-wrapper .menu-card,
-        .chat-size-0 .yk-chat-plus .chat-input-wrapper .control-wrapper .chat-config-wrapper
-        {
-            background: unset;
-            border: unset;
-            box-shadow: unset;
+        .chat-size-0 .yk-chat-plus .chat-input-wrapper .control-wrapper .chat-config-wrapper {
+            background: none;
+            border: none;
+            box-shadow: none;
         }
         .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .increase-opacity,
         .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-height-button,
@@ -274,7 +262,8 @@
         .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-fade-out-button {
             display: none;
         }
-        `;
+    `;
+
 
     const intercept = (obj, key, cb, _ = obj[key]) => obj[key] = (...args) => {
         const result = _.apply(obj, args);
