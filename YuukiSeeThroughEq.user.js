@@ -41,6 +41,7 @@
         if (typeof Engine !== 'undefined' && Engine?.interface?.get$interfaceLayer && Engine?.allInit) {
             clearInterval(interval);
             Engine.interface.get$interfaceLayer()?.addClass("yk-see-through-eq");
+            setTimeout(()=>{Engine.interface?.setSizeEqColumnSize();},1);
         }
     }, 100);
 })();
