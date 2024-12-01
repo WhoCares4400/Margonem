@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.8.1
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -252,10 +252,11 @@
             border: none;
             box-shadow: none;
         }
-        .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .increase-opacity,
-        .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-height-button,
-        .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-width-btn,
-        .chat-size-1 :not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-fade-out-button {
+        .chat-size-1 .new-chat-window:not(.yk-chat-plus) .border-image,
+        .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .increase-opacity,
+        .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-height-button,
+        .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-width-btn,
+        .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-fade-out-button {
             display: none;
         }
     `;
