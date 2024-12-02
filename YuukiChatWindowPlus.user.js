@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.8.2
+// @version      1.8.3
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -53,10 +53,14 @@
         .chat-size-0 .left-column.main-column {
             display: block !important;
         }
+        .chat-size-0 .left-column.main-column > .border {
+            display: none;
+        }
         .chat-size-0 .yk-chat-plus {
             height: ${normalWindowHeight}px;
             width: 550px;
             top: auto;
+            left: 0;
             bottom: 0 !important;
             pointer-events: none;
         }
