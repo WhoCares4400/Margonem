@@ -302,7 +302,7 @@
 
                     setTimeout(() => {
                         handleOtherChatAddons();
-                    }, 1000);
+                    }, 1500);
                 }, 1);
             }
         }, 100);
@@ -693,8 +693,8 @@
 
         [globalLootlog, panelWalk, licznikUbic, ...clanLootlogs].forEach(e => {
             if (e) {
-                let offsetBottom = (parseInt(window.getComputedStyle(e).getPropertyValue('bottom')) || 0);
-                e.style.bottom = (offsetBottom + windowHeight + 75)+'px';
+                let offsetBottom = (parseInt(window.getComputedStyle(e).getPropertyValue('bottom')) || 15);
+                e.style.bottom = (offsetBottom + windowHeight)+'px';
             }
         });
     }
