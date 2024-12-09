@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.8.3
+// @version      1.9
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -26,17 +26,20 @@
     const fadeOutWindowHeight = 309;
     const chatInputWrapperHeight = 57;
 
+    const excludedClickClases = ["chat-channel-card", "chat-channel-card-icon", "magic-input", "card-name", "card-remove", "card-list", "link", "chat-config-wrapper", "chat-config-wrapper-button", "increase-opacity", "toggle-height-button", "toggle-width-btn", "toggle-fade-out-button", "chat-hover-hide-checkbox", "click-able"];
+
     var fadeOutTop = Boolean(parseInt(GM_getValue('yk-chatFadeOutTop', '1'), 10));
+    var hoverHide = Boolean(parseInt(GM_getValue('yk-chatHoverHide', '0'), 10));
     var windowHeight = fadeOutTop ? fadeOutWindowHeight : normalWindowHeight;
+    var borderImageHeight = 0;
 
     var chatHeight;
     var chatWidth;
 
-    var enabled = false;
+    var enabled = Boolean(parseInt(GM_getValue('yk-chatEnabled', '1'), 10));
     var inBattle = false;
 
     var enterPressed = false;
-    var isTyping = false;
     document.addEventListener('keydown', function(e) {
         if (e.keyCode === 13 && enabled) {
             if (enterPressed) {
@@ -60,7 +63,7 @@
             height: ${normalWindowHeight}px;
             width: 550px;
             top: auto;
-            left: 0;
+            left: -2px;
             bottom: 0 !important;
             pointer-events: none;
         }
@@ -143,6 +146,32 @@
             height: calc(100% - 0.375rem);
         }
 
+        /* hover hide styles */
+        .chat-size-0 .yk-chat-plus.hover-hide .scroll-wrapper {
+            opacity: 1;
+            -webkit-transition: opacity 0.1s ease;
+            -moz-transition: opacity 0.1s ease;
+            -ms-transition: opacity 0.1s ease;
+            -o-transition: opacity 0.1s ease;
+            transition: opacity 0.1s ease;
+        }
+        .chat-size-0 .yk-chat-plus.hover-hide:not(:has(magic_input:focus)) .scroll-wrapper.hover-hidden:not(.supress) {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .chat-size-0 .yk-chat-plus.hover-hide:not(:has(magic_input:focus)) .scroll-wrapper.hover-hidden.supress {
+            pointer-events: auto;
+        }
+        .chat-size-0 .yk-chat-plus .scroll-wrapper .chat-hover-dummy {
+            display: none;
+        }
+         .chat-size-0 .yk-chat-plus.hover-hide .scroll-wrapper.hover-hidden:not(:has(magic_input:focus)) .chat-hover-dummy {
+            display: block;
+        }
+        .chat-size-0 .yk-chat-plus.hover-hide .border-image {
+           transition: height 0.07s ease;
+        }
+
         /* scroll styles */
         .chat-size-0 .yk-chat-plus .scroll-wrapper .scrollbar-wrapper {
             height: 100%;
@@ -201,21 +230,85 @@
             border: none;
         }
 
+        /* checkbox */
+        .yk-checkbox {
+            --yk-checkbox-size: 1.2em;
+            --yk-checkbox-border-color: rgba(194, 194, 194, 0.4);
+            --yk-checkbox-bg: rgb(43 43 43 / 15%);
+            --yk-checkbox-checked-bg: rgb(12 12 12 / 30%);
+            --yk-checkbox-check-color: #00bc18;
+            --yk-checkbox-transition: 0.2s ease;
+            --yk-checkbox-focus-ring: rgba(255, 255, 255, 0.5);
+
+            display: inline-flex;
+            align-items: center;
+            user-select: none;
+            font-family: sans-serif;
+            font-size: 14px;
+            z-index: 1;
+        }
+        .yk-checkbox input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            position: relative;
+            width: var(--yk-checkbox-size);
+            height: var(--yk-checkbox-size);
+            margin: 0;
+            border-radius: 4px;
+            border: 1px solid var(--yk-checkbox-border-color);
+            background: var(--yk-checkbox-bg);
+            outline: none;
+            cursor: url(../img/gui/cursor/5n.png?v=1732624602172) 4 0, url(../img/gui/cursor/5n.cur?v=1732624602172) 4 0, auto !important;
+            transition:
+                background-color var(--yk-checkbox-transition),
+                border-color var(--yk-checkbox-transition),
+                box-shadow var(--yk-checkbox-transition);
+        }
+        .yk-checkbox input[type="checkbox"]:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        .yk-checkbox input[type="checkbox"]:focus {
+            box-shadow: 0 0 0 2px var(--yk-checkbox-focus-ring);
+        }
+        .yk-checkbox input[type="checkbox"]:checked {
+            background: var(--yk-checkbox-checked-bg);
+            border-color: rgba(194, 194, 194, 0.6);
+        }
+        .yk-checkbox input[type="checkbox"]:checked::after {
+            content: "";
+            position: absolute;
+            left: 0.38em;
+            width: 0.25em;
+            height: 0.65em;
+            border-right: 2px solid var(--yk-checkbox-check-color);
+            border-bottom: 2px solid var(--yk-checkbox-check-color);
+            transform: rotate(45deg);
+        }
+        .yk-checkbox label {
+            color: #fff;
+            opacity: 0.85;
+            transition: opacity var(--yk-checkbox-transition);
+        }
+        .yk-checkbox:hover label {
+            opacity: 1;
+        }
+
         /* background opacity levels */
-        .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="0"]:hover:not(:has(.increase-opacity:hover)) .border-image,
+        .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="0"]:hover:not(:has(.increase-opacity:hover, .scroll-wrapper.hover-hidden:hover:not(.supress))) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="0"]:has(.magic-input:active) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="0"]:has(.magic-input:focus) .border-image {
             opacity: 0.6 !important;
         }
-        .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="1"]:hover:not(:has(.increase-opacity:hover)) .border-image,
+        .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="1"]:hover:not(:has(.increase-opacity:hover, .scroll-wrapper.hover-hidden:hover:not(.supress))) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="1"]:has(.magic-input:active) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="1"]:has(.magic-input:focus) .border-image {
             opacity: 0.8 !important;
         }
-        .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="2"]:hover:not(:has(.increase-opacity:hover)) .border-image,
+        .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="2"]:hover:not(:has(.increase-opacity:hover, .scroll-wrapper.hover-hidden:hover:not(.supress))) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="2"]:has(.magic-input:active) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="2"]:has(.magic-input:focus) .border-image,
-        .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="3"]:hover:not(:has(.increase-opacity:hover)) .border-image,
+        .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="3"]:hover:not(:has(.increase-opacity:hover, .scroll-wrapper.hover-hidden:hover:not(.supress))) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="3"]:has(.magic-input:active) .border-image,
         .chat-size-0 .yk-chat-plus.border-window.transparent[data-opacity-lvl="3"]:has(.magic-input:focus) .border-image {
             opacity: 1 !important;
@@ -238,7 +331,8 @@
         .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .increase-opacity,
         .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-height-button,
         .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-width-btn,
-        .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-fade-out-button {
+        .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .toggle-fade-out-button,
+        .chat-size-1 .new-chat-window:not(.yk-chat-plus) .chat-input-wrapper .control-wrapper .chat-hover-hide {
             display: none;
         }
     `;
@@ -273,8 +367,8 @@
         customizeChatHeight(wnd);
         customizeChatWidth(wnd);
         toggleFadeOutTop(wnd);
+        hoverHideCheckbox(wnd);
 
-        handleChatToggle(wnd);
         hangleChatClick(wnd);
         handleMessageInputAlignment(wnd);
         handleBattle(wnd);
@@ -289,16 +383,12 @@
             if (Engine?.allInit && hasChatSizeClass) {
                 clearInterval(interval);
 
-                wnd.querySelector('magic_input').addEventListener('blur', function() {
-                    setTimeout(()=>{
-                        isTyping = false;
-                        $(this).blur();
-                    }, 1);
-                });
-
                 setTimeout(()=>{
+                    if (document.querySelector('.game-window-positioner').classList.contains('chat-size-'+(enabled ? '1' : '0'))) {
+                        Engine.chatController.getChatWindow().chatToggle();
+                    }
                     chatToggle(wnd);
-                    document.querySelector('.left-column.main-column').style.zIndex = "0";
+                    handleChatToggle(wnd);
 
                     setTimeout(() => {
                         handleOtherChatAddons();
@@ -364,7 +454,8 @@
         const initialHeightPercent = isNaN(storedHeightPercent) ? DEFAULT_HEIGHT : storedHeightPercent;
         const initialHeight = (maxChatHeight * (initialHeightPercent/100));
         chatMessageWrapper.style.height = `${initialHeight}px`;
-        borderImage.style.height = initialHeightPercent === 100 ? '' : `${(initialHeight+chatInputWrapperHeight)}px`;
+        borderImageHeight = initialHeightPercent === 100 ? 0 : (initialHeight + chatInputWrapperHeight);
+        borderImage.style.height = 0 >= borderImageHeight ? '' : `${borderImageHeight}px`;
         chatHeight = initialHeight;
 
         const toggleHeightBtn = document.createElement('div');
@@ -390,11 +481,12 @@
             currentHeightPercent = currentHeightPercent >= MAX_HEIGHT ? MIN_HEIGHT : currentHeightPercent + HEIGHT_INCREMENT;
             let currentHeight = (maxChatHeight * (currentHeightPercent/100));
             chatMessageWrapper.style.height = `${currentHeight}px`;
-            borderImage.style.height = currentHeightPercent === 100 ? '' : `${(currentHeight+chatInputWrapperHeight)}px`;
+            borderImageHeight = currentHeightPercent === 100 ? 0 : (currentHeight + chatInputWrapperHeight);
+            borderImage.style.height = 0 >= borderImageHeight ? '' : `${borderImageHeight}px`;
             chatHeight = currentHeight;
             setTimeout(()=>{alignMessageInput(wnd);},100);
 
-            message(`Aktualna wysokość: ${currentHeightPercent}%`);
+            message(`Wysokość chatu: ${currentHeightPercent}%`);
             GM_setValue('yk-chatHeight', currentHeightPercent.toString());
         });
         $(toggleHeightBtn).tip("Zmień wysokość chatu");
@@ -454,7 +546,7 @@
             chatWidth = currentWidth;
             setTimeout(()=>{alignMessageInput(wnd);},100);
 
-            message(`Aktualna szerokość: ${currentWidth}px`);
+            message(`Szerokość chatu: ${currentWidth}px`);
             GM_setValue('yk-chatWidth', currentWidth.toString());
         });
         $(toggleWidthBtn).tip("Zmień szerokość chatu");
@@ -495,10 +587,110 @@
             windowHeight = fadeOutTop ? fadeOutWindowHeight : normalWindowHeight;
 
             updateChatScroll(wnd);
+            message(`${(fadeOutTop ? 'Właczono' : 'Wyłączono')} zanikanie górnej krawędzi chatu`);
             GM_setValue('yk-chatFadeOutTop', fadeOutTop ? '1' : '0');
         });
         $(toggleFadeOutBtn).tip("Włącz/Wyłącz zanikanie górnej krawędzi chatu");
         wnd.querySelector('.chat-input-wrapper .control-wrapper').appendChild(toggleFadeOutBtn);
+    }
+
+    /**
+     * Creates and inserts the hover-hide checkbox element after .chat-config-wrapper.
+     * @param {HTMLElement} wnd - The chat window element.
+     */
+    function hoverHideCheckbox(wnd) {
+        const hoverHideCheckboxContainer = document.createElement('div');
+        hoverHideCheckboxContainer.className = 'chat-hover-hide yk-checkbox';
+        hoverHideCheckboxContainer.style.position = 'absolute';
+        hoverHideCheckboxContainer.style.right = '99px';
+        hoverHideCheckboxContainer.style.top = '5px';
+
+        const hoverHideCheckboxInput = document.createElement('input');
+        hoverHideCheckboxInput.type = 'checkbox';
+        hoverHideCheckboxInput.className = 'chat-hover-hide-checkbox';
+        hoverHideCheckboxInput.checked = hoverHide;
+
+
+        const hoverDummy = document.createElement('div');
+        hoverDummy.className = 'chat-hover-dummy';
+        Object.assign(hoverDummy.style, {
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            'z-index': '-1',
+            'pointer-events': 'auto',
+        });
+
+        const borderImage = wnd.querySelector('.border-image');
+        let borderHeightChanged = false;
+        const scrollWrapper = wnd.querySelector('.scroll-wrapper');
+        scrollWrapper.insertBefore(hoverDummy, scrollWrapper.firstChild);
+
+        scrollWrapper.addEventListener('mouseenter', () => {
+            if (hoverHide && !wnd.querySelector('magic_input:focus')) {
+                scrollWrapper.classList.add("hover-hidden");
+                if (!borderHeightChanged) {
+                    borderImage.style.height = chatInputWrapperHeight + (fadeOutTop ? 15 : 0)+'px';
+                    borderHeightChanged = true;
+                }
+            }
+        });
+        scrollWrapper.addEventListener('mouseleave', () => {
+            if (hoverHide) {
+                scrollWrapper.classList.remove("hover-hidden");
+                if (borderHeightChanged) {
+                    borderImage.style.height = borderImageHeight+'px';
+                    borderHeightChanged = false;
+                }
+            }
+        });
+        scrollWrapper.addEventListener('mousedown', (e) => {
+            if (hoverHide && wnd.querySelector('magic_input:focus')) {
+                scrollWrapper.classList.add("supress");
+                document.addEventListener('mouseup', function() {
+                    setTimeout(()=>{
+                        scrollWrapper.classList.remove("supress");
+                        if (!wnd.querySelector('magic_input:focus')) {
+                            const mouseMoveEvent = new MouseEvent('mousemove', {
+                                bubbles: true,
+                                cancelable: true,
+                                clientX: 0,
+                                clientY: 0
+                            });
+                            hoverDummy.dispatchEvent(mouseMoveEvent);
+                        }
+                    }, 1);
+                }, { once: true });
+            }
+        });
+
+        hoverDummy.addEventListener('mousemove', (e) => {
+            if (hoverHide) {
+                triggerGameCanvasMouseEvent(e);
+                if (!borderHeightChanged) {
+                    borderImage.style.height = chatInputWrapperHeight + (fadeOutTop ? 15 : 0)+'px';
+                    borderHeightChanged = true;
+                }
+            }
+        });
+
+        hoverHideCheckboxInput.addEventListener('change', (e) => {
+            hoverHide = e.currentTarget.checked;
+            hoverHideCheckboxInput.checked = hoverHide;
+            wnd.classList[hoverHide ? "add" : "remove"]("hover-hide");
+
+            if (!hoverHide) {
+                scrollWrapper.classList.remove("hover-hidden");
+            }
+
+            hoverHideCheckboxInput.blur();
+            message(`${(hoverHide ? 'Właczono' : 'Wyłączono')} ukrywanie chatu po najechaniu kursorem`);
+            GM_setValue('yk-chatHoverHide', hoverHide ? '1' : '0');
+        });
+        hoverHideCheckboxContainer.appendChild(hoverHideCheckboxInput);
+
+        $(hoverHideCheckboxContainer).tip(`Włącz/Wyłącz ukrywanie chatu po najechaniu myszką!<br><br>Ułatwia podchodzenie w lewy dolny róg mapy.<br><br>Chat nie będzie ukrywany podczas pisania nowej wiadomości<br>(po wciśnięciu klawisza "Enter" lub kliknięciu na pole nowej wiadomości).<br>Dzięki temu możesz wciąż kliknąć na dowolny element czatu.`);
+        wnd.querySelector('.chat-input-wrapper .control-wrapper').appendChild(hoverHideCheckboxContainer);
     }
 
     /**
@@ -507,7 +699,7 @@
      */
     function handleChatToggle(wnd) {
         intercept(Engine.chatController.getChatWindow(), 'chatToggle', () => {
-            chatToggle(wnd);
+            chatToggle(wnd, true);
         });
 
         const originalSetChat = Engine.interface.setChat;
@@ -524,18 +716,27 @@
      * Toggles chat.
      * @param {HTMLElement} wnd - The quest window element.
      */
-    function chatToggle(wnd) {
-        if (document.querySelector('.game-window-positioner').classList.contains('chat-size-0')) {
-            enabled = true;
+    function chatToggle(wnd, saveChange = false) {
+        if (saveChange) {
+            enabled = !enabled;
+            GM_setValue('yk-chatEnabled', enabled ? '1' : '0');
+        }
+
+        if (enabled) {
+            document.querySelector('.left-column.main-column').style.zIndex = "0";
             wnd.classList.add("border-window", "transparent", "yk-chat-plus");
             if (fadeOutTop) {
                 wnd.classList.add("fade-out-top");
             }
+            if (hoverHide) {
+                wnd.classList.add("hover-hide");
+            }
         } else {
-            enabled = false;
+            document.querySelector('.left-column.main-column').style.zIndex = "";
             wnd.style.width = '';
-            wnd.classList.remove("border-window", "transparent", "yk-chat-plus", "fade-out-top");
+            wnd.classList.remove("border-window", "transparent", "yk-chat-plus", "fade-out-top", "hover-hide");
         }
+
         setTimeout(()=>{alignMessageInput(wnd);},100);
     }
 
@@ -549,32 +750,30 @@
                 return;
             }
 
-            const excluded = ["chat-channel-card", "chat-channel-card-icon", "magic-input", "card-name", "card-remove", "card-list", "link", "chat-config-wrapper", "chat-config-wrapper-button", "increase-opacity", "toggle-height-button", "toggle-width-btn", "toggle-fade-out-button", "click-able"];
-            if (excluded.some(className => e.target.classList.contains(className) || e.target.closest('.'+className))) {
-                e.preventDefault();
+            if (excludedClickClases.some(className => e.target.classList.contains(className) || e.target.closest('.'+className))) {
                 return;
             }
 
-            triggerGameCanvasClick(e, wnd);
+            triggerGameCanvasMouseEvent(e);
         });
     }
 
     /**
-     * Propagates the click ivent to game canvas.
-     * @param {Event} e - Initial click event.
-     * @param {HTMLElement} wnd - The quest window element.
+     * Propagates the mouse event to game canvas.
+     * @param {Event} e - Initial mouse event.
      */
-    function triggerGameCanvasClick(e, wnd) {
-        if (!Engine?.interface?.get$GAME_CANVAS) {
+    function triggerGameCanvasMouseEvent(e) {
+        const gameCanvas = Engine?.interface?.get$GAME_CANVAS();
+        if (!gameCanvas) {
             return;
         }
-        const canvas = Engine.interface.get$GAME_CANVAS()[0];
+        const canvas = gameCanvas[0];
         const canvasRect = canvas.getBoundingClientRect();
 
         const x = e.clientX - canvasRect.left;
         const y = e.clientY - canvasRect.top + canvasRect.y;
 
-        const canvasClickEvent = new MouseEvent('click', {
+        const canvasClickEvent = new MouseEvent(e.type, {
             bubbles: true,
             cancelable: true,
             clientX: x,
