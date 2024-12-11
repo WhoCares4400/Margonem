@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      1.9.1
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -392,7 +392,7 @@
 
                     setTimeout(() => {
                         handleOtherChatAddons();
-                    }, 1500);
+                    }, 2000);
                 }, 1);
             }
         }, 100);
@@ -610,7 +610,6 @@
         hoverHideCheckboxInput.className = 'chat-hover-hide-checkbox';
         hoverHideCheckboxInput.checked = hoverHide;
 
-
         const hoverDummy = document.createElement('div');
         hoverDummy.className = 'chat-hover-dummy';
         Object.assign(hoverDummy.style, {
@@ -639,7 +638,7 @@
             if (hoverHide) {
                 scrollWrapper.classList.remove("hover-hidden");
                 if (borderHeightChanged) {
-                    borderImage.style.height = borderImageHeight+'px';
+                    borderImage.style.height = borderImageHeight === 0 ? '' : borderImageHeight+'px';
                     borderHeightChanged = false;
                 }
             }
@@ -893,7 +892,7 @@
         [globalLootlog, panelWalk, licznikUbic, ...clanLootlogs].forEach(e => {
             if (e) {
                 let offsetBottom = (parseInt(window.getComputedStyle(e).getPropertyValue('bottom')) || 15);
-                e.style.bottom = (offsetBottom + windowHeight)+'px';
+                e.style.bottom = (offsetBottom + windowHeight + 15)+'px';
             }
         });
     }
