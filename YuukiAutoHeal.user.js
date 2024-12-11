@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Margonem AutoHeal [NI]
+// @name         AutoHeal by Yuuki [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  AutoHeal do Margonem (Nowy Interfejs)
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -14,33 +14,40 @@
 // @exclude      http*://dev-commons.margonem.*/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=margonem.pl
 // @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @grant        unsafeWindow
-// @require      https://code.jquery.com/jquery-3.6.0.min.js
 // ==/UserScript==
 
 class YuukiAutoHeal {
     constructor() {
-		if (this.isOldInterface()) {
-			console.error("AutoHeal działa tylko w NOWYM INTERFEJSIE!");
-			return;
-		}
+        const heroInterval = setInterval(() => {
+            if (unsafeWindow?.Engine?.hero?.d?.id) {
+                clearInterval(heroInterval);
+                if (this.isOldInterface()) {
+                    console.error("AutoHeal działa tylko na NOWYM INTERFEJSIE!");
+                    return;
+                }
 
-		this.initializeProperties();
-		this.createContainer();
-		this.initializeAutoHealDetection();
-		this.initializeHpDataCollection();
+                this.initializeProperties();
+                this.createContainer();
+                this.initializeAutoHealDetection();
+                this.initializeHpDataCollection();
+            }
+        }, 250);
 	}
 
 	isOldInterface() {
-		return unsafeWindow.getCookie("interface") === 'si';
+		return unsafeWindow?.getCookie("interface") === 'si';
 	}
 
 	initializeProperties() {
 		const self = this;
 
-		this.version = '1.7';
+		this.version = '1.8';
 		this.healInterval = 150; // ms
 
+        this.heroId = unsafeWindow.Engine.hero.d.id;
 		this.hp = null;
 		this.maxhp = null;
 
@@ -53,18 +60,22 @@ class YuukiAutoHeal {
 		};
 
 		this.options = {
-			active: Boolean(parseInt(localStorage.getItem('ah-active') ?? 1)),
-			shrinked: Boolean(parseInt(localStorage.getItem('ah-shrinked') ?? 0)),
-			hPotion: Boolean(parseInt(localStorage.getItem('ah-hPotion') ?? 1)),
-			hFull: Boolean(parseInt(localStorage.getItem('ah-hFull') ?? 0)),
-			hPercent: Boolean(parseInt(localStorage.getItem('ah-hPercent') ?? 0)),
-			hHealToFull: Boolean(parseInt(localStorage.getItem('ah-hHealToFull') ?? 0)),
-			hMinHealHpPercent: parseInt(localStorage.getItem('ah-hMinHealHpPercent') ?? 80),
-            hMinPotionHealing: parseInt(localStorage.getItem('ah-hMinPotionHealing') ?? 0),
-			rarity: JSON.parse(localStorage.getItem('ah-hRarity')) || ['L', 'Ul', 'H', 'U', 'P'],
-			hNotify: Boolean(parseInt(localStorage.getItem('ah-hNotify') ?? 1)),
-			hHpNumDisplay: Boolean(parseInt(localStorage.getItem('ah-hHpNumDisplay') ?? 1))
+			active: Boolean(parseInt(GM_getValue(this.heroId+'ah-active', '1'))),
+			shrinked: Boolean(parseInt(GM_getValue(this.heroId+'ah-shrinked', '0'))),
+			hPotion: Boolean(parseInt(GM_getValue(this.heroId+'ah-hPotion', '1'))),
+			hFull: Boolean(parseInt(GM_getValue(this.heroId+'ah-hFull', '0'))),
+			hPercent: Boolean(parseInt(GM_getValue(this.heroId+'ah-hPercent', '0'))),
+			hHealToFull: Boolean(parseInt(GM_getValue(this.heroId+'ah-hHealToFull', '0'))),
+			hMinHealHpPercent: parseInt(GM_getValue(this.heroId+'ah-hMinHealHpPercent', '80')),
+            hMinPotionHealing: parseInt(GM_getValue(this.heroId+'ah-hMinPotionHealing', '0')),
+			hRarity: JSON.parse(GM_getValue(this.heroId+'ah-hRarity', '["L","Ul","H","U","P"]')),
+			hNotify: Boolean(parseInt(GM_getValue(this.heroId+'ah-hNotify', '0'))),
+			hHpNumDisplay: Boolean(parseInt(GM_getValue(this.heroId+'ah-hHpNumDisplay', '1'))),
+            hIgnoredItems: GM_getValue(this.heroId+'ah-hIgnoredItems', ''),
 		};
+
+        this.ignoredItems = this.getIgnoredItemsArray(this.options.hIgnoredItems);
+        this.Engine = unsafeWindow.getEngine();
 	}
 
 	initializeAutoHealDetection() {
@@ -102,8 +113,6 @@ class YuukiAutoHeal {
                     watchBattleStatePropertyChanges(battle, "endBattle", onEndBattleChange);
                     watchBattleStatePropertyChanges(battle, "endBattleForMe", onEndBattleChange);
                 }, 100);
-
-                this.Engine = unsafeWindow.getEngine();
             }
         }, 100);
 	}
@@ -204,7 +213,7 @@ class YuukiAutoHeal {
             #ah-container.shrinked,
             .shrinked #ah-container-header,
             .shrinked #ah-container-body {
-				width: 100px;
+				width: 122px;
 			}
 			#ah-container:hover {
 				box-shadow: 0px 5px 18px #414141 !important;
@@ -216,7 +225,7 @@ class YuukiAutoHeal {
 
 			#ah-container-header {
                 width: 300px;
-				min-height: 25px;
+				min-height: 18px;
 				background: linear-gradient(180deg, rgba(68, 68, 68, 0.8), rgba(34, 34, 34, 0.8));
 				border-bottom: 1px solid #555;
 				border-top-left-radius: 5px;
@@ -230,21 +239,41 @@ class YuukiAutoHeal {
 			}
 			#ah-container-header #ah-expand-icon {
 				position: absolute;
-                padding: 5px;
 				right: 0;
                 top: 0;
                 line-height: 1;
-                transition: transform 0.3s;
                 cursor: url(https://aldous.margonem.pl/img/gui/cursor/5n.png?v=1728634377350) 4 0, url(https://aldous.margonem.pl/img/gui/cursor/5n.cur?v=1728634377350) 4 0, auto !important;
                 z-index: 1;
 			}
+            #ah-container #ah-expand-icon > svg {
+                transition: transform 0.3s;
+                height: 13px;
+                width: 13px;
+                padding: 8px;
+                transform: rotate(180deg);
+            }
+            #ah-container.shrinked #ah-expand-icon > svg {
+                height: 11px;
+                width: 11px;
+                padding: 3px;
+                transform: rotate(0deg);
+            }
 			#ah-container-header .ah-h-small {
-				right: 14px;
+                font-size: 0.7rem;
+				right: 6px;
 			}
+            #ah-container #heal-active-checkbox {
+                margin-left: 7px;
+            }
+            #ah-container.shrinked #heal-active-checkbox {
+                transform: scale(0.9);
+                margin-left: 1px;
+            }
 
 			#ah-container-body {
                 width: 300px;
                 height: 380px;
+                font-size: 0.95em;
                 overflow-y: scroll;
                 overflow: hidden auto;
 				border-bottom-left-radius: 5px;
@@ -268,20 +297,28 @@ class YuukiAutoHeal {
 			    background-color: #555555;
 			}
 
-			#ah-container-body input[type="number"],
-            #ah-container-body button {
+			#ah-container input,
+            #ah-container button {
 				border-radius: 5px;
 				background: #3b3b3b;
 				color: white;
 			}
+            #ah-container button {
+                cursor: url(/img/gui/cursor/1n.png?v=1728634377350), url(/img/gui/cursor/1n.cur?v=1728634377350), auto;
+            }
+            #ah-container button.h-manual-heal-btn-sm {
+                font-size: 0.7rem;
+                padding: 0 0.25rem;
+                margin: 0 0.125rem;
+            }
             #ah-container-body #hMinHealHpPercent {
                 width: 40px;
             }
             #ah-container-body #hMinPotionHealing {
                 width: 80px;
             }
-            #ah-container-body button {
-                cursor: url(/img/gui/cursor/1n.png?v=1728634377350), url(/img/gui/cursor/1n.cur?v=1728634377350), auto;
+            #ah-container-body #hIgnoredItems {
+                width: 100%;
             }
 
 			#ah-container-body p {
@@ -305,6 +342,10 @@ class YuukiAutoHeal {
 				z-index: 1;
 				flex-shrink: 0;
 			}
+            #ah-container .light-up {
+                box-shadow: 0 0 3px 4px rgba(92, 215, 0, 0.8);
+                transition: box-shadow 0.3s ease-in-out;
+            }
 
 			.leg-color {
 				color: #f19b5c;
@@ -416,8 +457,11 @@ class YuukiAutoHeal {
 				font-weight: bold;
 			}
 			.lh-sm {
-				line-height: 1.25;
+				line-height: 1.1;
 			}
+            .lh-sm-p {
+                line-height: 1.25;
+            }
 			.w-100 {
 				width: 100%;
 			}
@@ -452,9 +496,9 @@ class YuukiAutoHeal {
 					<div class="position-absolute start-0" style="z-index:1" title="Włącz/Wyłącz AutoHeal">
 						<div class="checkbox my-1${this.options.active ? ' active' : ''}" id="heal-active-checkbox" data-opt="active"></div>
 					</div>
-					<div class="position-absolute w-100 small ah-h-small text-end me-2"${this.options.shrinked ? '' : ' style="display: none;"'}>AH v${this.version}</div>
-                    <div id="ah-expand-icon"${this.options.shrinked ? '' : ' style="transform: rotate(180deg)"'} title="Zwiń/Rozwiń">
-						<svg fill="#000000" height="13px" width="13px" viewBox="0 0 330 330" xml:space="preserve" style="fill: white !important;">
+					<div class="position-absolute w-100 ah-h-small text-end me-2"${this.options.shrinked ? '' : ' style="display: none;"'}>AH v${this.version}<button class="h-manual-heal-btn h-manual-heal-btn-sm" title="Ulecz ręcznie">Lecz</button></div>
+                    <div id="ah-expand-icon" title="Zwiń/Rozwiń">
+						<svg fill="#000000" viewBox="0 0 330 330" xml:space="preserve" style="fill: white !important;">
 							<g id="XMLID_88_">
 								<path id="XMLID_89_" d="M304.394,139.394l-139.39,139.393L25.607,139.393c-5.857-5.857-15.355-5.858-21.213,0.001
 									c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393s7.794-1.581,10.606-4.394l149.996-150
@@ -474,25 +518,25 @@ class YuukiAutoHeal {
 						<div class="mb-2">
 							<div class="mb-1 d-flex" style="display: flex;justify-content: space-between;align-items: baseline;">
                                 <div>Opcje leczenia</div>
-                                <button id="h-manual-heal-btn">Ulecz</button>
+                                <button class="h-manual-heal-btn" title="Ulecz ręcznie">Ulecz</button>
                             </div>
 							<div class="ps-1">
 								<div class="mb-1 d-flex align-items-center"><div class="checkbox${this.options.hPotion ? ' active' : ''}" id="opt-potion-heal" data-opt="hPotion"></div><div class="label ms-1 lh-sm">Mikstury</div></div>
 								<div class="mb-1 d-flex align-items-center"><div class="checkbox${this.options.hFull ? ' active' : ''}" id="opt-full-heal" data-opt="hFull"></div><div class="label ms-1 lh-sm">Pełne leczenie</div></div>
 								<div class="d-flex align-items-center"><div class="checkbox${this.options.hPercent ? ' active' : ''}" id="opt-percent-heal" data-opt="hPercent"></div><div class="label ms-1 lh-sm">Mikstury procentowe</div></div>
 								<br>
-								<div class="d-flex"><div class="checkbox${this.options.hHealToFull ? ' active' : ''}" id="opt-heal-to-full" data-opt="hHealToFull"></div><div class="label ms-1 lh-sm">Zawsze lecz do pełna (nawet gdy zmarnujesz część mikstury), jeśli życie spadnie poniżej <input type="number" id="hMinHealHpPercent" value="${this.options.hMinHealHpPercent}" min="1" max="100"/>%</div></div>
-								<div class="d-flex align-items-center mt-2"><input type="number" class="me-2" id="hMinPotionHealing" value="${this.options.hMinPotionHealing}" min="0" /> Minimalna wartość leczenia mikstury</div>
+								<div class="d-flex"><div class="checkbox${this.options.hHealToFull ? ' active' : ''}" id="opt-heal-to-full" data-opt="hHealToFull"></div><div class="label ms-1 lh-sm-p">Zawsze lecz do pełna (nawet gdy zmarnujesz część mikstury), jeśli życie spadnie poniżej <input type="number" id="hMinHealHpPercent" value="${this.options.hMinHealHpPercent}" min="1" max="100"/>%</div></div>
+								<div class="d-flex align-items-center mt-2 lh-sm"><input type="number" class="me-2" id="hMinPotionHealing" value="${this.options.hMinPotionHealing}" min="0" /> Minimalna wartość leczenia mikstury</div>
 							</div>
 						</div>
 						<div class="mb-2">
 							<div class="mb-1">Dozwolone typy przedmiotów</div>
 							<div class="ps-1 d-flex">
-								<div class="d-flex align-items-center" title="Pozpolite"><div class="checkbox${this.options.rarity.includes('P') ? ' active' : ''}" id="opt-rarity-p" data-rarity="P"></div><div class="label me-1 lh-sm fw-bold common-color text-bon">*P*</div></div>
-								<div class="d-flex align-items-center" title="Unikatowe"><div class="checkbox${this.options.rarity.includes('U') ? ' active' : ''}" id="opt-rarity-u" data-rarity="U"></div><div class="label me-1 lh-sm fw-bold uni-color text-bon">*U*</div></div>
-								<div class="d-flex align-items-center" title="Heroiczne"><div class="checkbox${this.options.rarity.includes('H') ? ' active' : ''}" id="opt-rarity-h" data-rarity="H"></div><div class="label me-1 lh-sm fw-bold hero-color text-bon">*H*</div></div>
-								<div class="d-flex align-items-center" title="Ulepszone"><div class="checkbox${this.options.rarity.includes('Ul') ? ' active' : ''}" id="opt-rarity-ul" data-rarity="Ul"></div><div class="label me-1 lh-sm fw-bold upgraded-color text-bon">*Ul*</div></div>
-								<div class="d-flex align-items-center" title="Legendarne"><div class="checkbox${this.options.rarity.includes('L') ? ' active' : ''}" id="opt-rarity-l" data-rarity="L"></div><div class="label me-1 lh-sm fw-bold leg-color text-bon">*L*</div></div>
+								<div class="d-flex align-items-center" title="Pozpolite"><div class="checkbox${this.options.hRarity.includes('P') ? ' active' : ''}" id="opt-rarity-p" data-rarity="P"></div><div class="label me-1 lh-sm fw-bold common-color text-bon">*P*</div></div>
+								<div class="d-flex align-items-center" title="Unikatowe"><div class="checkbox${this.options.hRarity.includes('U') ? ' active' : ''}" id="opt-rarity-u" data-rarity="U"></div><div class="label me-1 lh-sm fw-bold uni-color text-bon">*U*</div></div>
+								<div class="d-flex align-items-center" title="Heroiczne"><div class="checkbox${this.options.hRarity.includes('H') ? ' active' : ''}" id="opt-rarity-h" data-rarity="H"></div><div class="label me-1 lh-sm fw-bold hero-color text-bon">*H*</div></div>
+								<div class="d-flex align-items-center" title="Ulepszone"><div class="checkbox${this.options.hRarity.includes('Ul') ? ' active' : ''}" id="opt-rarity-ul" data-rarity="Ul"></div><div class="label me-1 lh-sm fw-bold upgraded-color text-bon">*Ul*</div></div>
+								<div class="d-flex align-items-center" title="Legendarne"><div class="checkbox${this.options.hRarity.includes('L') ? ' active' : ''}" id="opt-rarity-l" data-rarity="L"></div><div class="label me-1 lh-sm fw-bold leg-color text-bon">*L*</div></div>
 							</div>
 						</div>
 						<div class="mb-2">
@@ -502,22 +546,26 @@ class YuukiAutoHeal {
 								<div class="d-flex align-items-center"><div class="checkbox${this.options.hHpNumDisplay ? ' active' : ''}" id="opt-show-hp-display" data-opt="hHpNumDisplay"></div><div class="label ms-1 lh-sm">Wyświetl Punkty Życia nad "kulką"</div></div>
 							</div>
 						</div>
+                        <div class="mb-2 ignored-items-container">
+							<div class="mb-1">Ignorowane przedmioty (<span id="ignored-items-count">${this.ignoredItems.length}</span>)</div>
+							<div class="me-2">
+							    <input type="text" id="hIgnoredItems" value="${this.options.hIgnoredItems}">
+							</div>
+					    </div>
 					</div>
 				</div>
 			</div>
 		`;
 
 		function appendContainerToBody(containerHTML) {
-			const container = document.createElement('div');
-			container.innerHTML = containerHTML;
-			document.body.appendChild(container);
+            unsafeWindow.Engine.interface.get$dropToDeleteWidgetLayer().append(containerHTML);
 		}
 
 		function handleOptionClick() {
 			const type = $(this).data('opt');
 			$(this).toggleClass('active');
 			self.options[type] = !self.options[type];
-			localStorage.setItem('ah-' + type, self.options[type] ? 1 : 0);
+			GM_setValue(self.heroId+'ah-' + type, self.options[type] ? '1' : '0');
 
 			if (type === 'active') {
 				unsafeWindow.message(`AutoHeal ${(self.options[type] ? " włączony " : " wyłączony")}`);
@@ -534,11 +582,11 @@ class YuukiAutoHeal {
 			const rarity = $(this).data('rarity');
 			$(this).toggleClass('active');
 			if ($(this).hasClass('active')) {
-				self.options.rarity.push(rarity);
+				self.options.hRarity.push(rarity);
 			} else {
-				self.options.rarity = self.options.rarity.filter(r => r !== rarity);
+				self.options.hRarity = self.options.hRarity.filter(r => r !== rarity);
 			}
-			localStorage.setItem('ah-hRarity', JSON.stringify(self.options.rarity));
+			GM_setValue(self.heroId+'ah-hRarity', JSON.stringify(self.options.hRarity));
 		}
 
 		function handleLabelClick(e) {
@@ -547,7 +595,7 @@ class YuukiAutoHeal {
 		}
 
 		function handleManualHealClick() {
-			self.autoHeal();
+			self.autoHeal(true);
 		}
 
 		function handleMinHealHpPercentChange() {
@@ -560,7 +608,7 @@ class YuukiAutoHeal {
 			}
 
 			self.options.hMinHealHpPercent = minHealHpPercent;
-			localStorage.setItem('ah-hMinHealHpPercent', minHealHpPercent);
+			GM_setValue(self.heroId+'ah-hMinHealHpPercent', minHealHpPercent);
 		}
 
 		function handleMinHealHpPercentFocusOut() {
@@ -582,7 +630,7 @@ class YuukiAutoHeal {
 			}
 
 			self.options.hMinPotionHealing = minPotionHealing;
-			localStorage.setItem('ah-hMinPotionHealing', minPotionHealing);
+			GM_setValue(self.heroId+'ah-hMinPotionHealing', minPotionHealing);
 		}
 
 		function handleMinPotionHealingFocusOut() {
@@ -591,10 +639,68 @@ class YuukiAutoHeal {
 
 			if (minPotionHealing === "" || minPotionHealing < minVal) {
 				self.options.hMinPotionHealing = 0;
-				localStorage.setItem('ah-hMinPotionHealing', 0);
+				GM_setValue(self.heroId+'ah-hMinPotionHealing', '0');
 				$(this).val(0);
 			}
 		}
+
+        function handleIgnoredChange() {
+			let ignoredText = $(this).val().trim();
+			self.options.hIgnoredItems = ignoredText;
+			GM_setValue(self.heroId+'ah-hIgnoredItems', ignoredText);
+		}
+
+        function handleIgnoredFocusOut() {
+            let ignoredText = $(this).val().trim();
+            let ignoredArray = self.getIgnoredItemsArray(ignoredText);
+
+            let parsedIgnoredText = ignoredArray.join(", ");
+            self.options.hIgnoredItems = parsedIgnoredText;
+            GM_setValue(self.heroId+'ah-hIgnoredItems', parsedIgnoredText);
+            $(this).val(parsedIgnoredText);
+
+            self.ignoredItems = ignoredArray;
+            unsafeWindow.message(`Zapisano ignorowane przedmioty (${ignoredArray.length})`);
+            document.querySelector('.ignored-items-container #ignored-items-count').innerText = ignoredArray.length;
+        }
+
+        function handleIgnoredItemDropping() {
+            // Adding ignored items by draging items
+            $('.ignored-items-container').droppable({
+                greedy: true,
+                accept: '.item',
+                drop: (e, { draggable, position, helper }) => {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+
+                    helper.hide();
+                    const target = document.elementFromPoint(position.left, position.top);
+                    helper.show();
+
+                    const ignoreInputValue = self.options.hIgnoredItems;
+                    const itemName = draggable.attr('data-name');
+
+                    if (ignoreInputValue.includes(itemName)) return;
+
+                    const ignoreInput = $('#hIgnoredItems');
+                    ignoreInput.val( ignoreInputValue !== "" ? ignoreInputValue+', '+itemName : itemName );
+                    ignoreInput.trigger("focusout");
+                },
+                activate: function() {
+                    $(this).addClass("light-up");
+                },
+                deactivate: function() {
+                    $(this).removeClass("light-up");
+                }
+            });
+
+            const originalDeleteNotif = unsafeWindow.Engine.interface.deleteNotif;
+            unsafeWindow.Engine.interface.deleteNotif = function(i) {
+                console.log(i);
+                originalDeleteNotif.call(this, i);
+            };
+        }
 
 		function ensureInBounds($container) {
 			const winWidth = $(window).width();
@@ -637,13 +743,13 @@ class YuukiAutoHeal {
 					$header.css('cursor', 'grab');
 					const left = $container.css('left');
 					const top = $container.css('top');
-					localStorage.setItem('ah-c-pos', JSON.stringify({ left, top }));
+					GM_setValue(self.heroId+'ah-c-pos', JSON.stringify({ left, top }));
 				}
 			});
 		}
 
 		function restoreContainerPosition($container) {
-			const savedPosition = localStorage.getItem('ah-c-pos');
+			const savedPosition = GM_getValue(self.heroId+'ah-c-pos', null);
 			if (savedPosition) {
 				const { left, top } = JSON.parse(savedPosition);
 				$container.css({ left, top });
@@ -682,11 +788,9 @@ class YuukiAutoHeal {
 				if ($(e.target).hasClass("checkbox")) return;
 
                 self.options.shrinked = !self.options.shrinked;
-				localStorage.setItem('ah-shrinked', self.options.shrinked ? 1 : 0);
+				GM_setValue(self.heroId+'ah-shrinked', self.options.shrinked ? '1' : '0');
 
                 if (self.options.shrinked) {
-                    $('#ah-expand-icon').css({transform: 'rotate(0deg)'});
-
                     $body.stop(true, true).slideToggle();
                     $('.ah-h-big').stop(true, true).fadeToggle("fast");
 
@@ -695,8 +799,6 @@ class YuukiAutoHeal {
                         $('#ah-container').toggleClass('shrinked');
                     }, 400);
                 } else {
-                    $('#ah-expand-icon').css({transform: 'rotate(180deg)'});
-
                     $('.ah-h-small, .ah-h-big').stop(true, true).fadeToggle("fast");
                     $('#ah-container').toggleClass('shrinked');
                     setTimeout(() => {
@@ -715,9 +817,11 @@ class YuukiAutoHeal {
 			$('#heal-active-checkbox, #opt-potion-heal, #opt-full-heal, #opt-percent-heal, #opt-heal-to-full, #opt-notify, #opt-show-hp-display').on('click', handleOptionClick);
 			$('#opt-rarity-p, #opt-rarity-u, #opt-rarity-h, #opt-rarity-ul, #opt-rarity-l').on('click', handleRarityClick);
 			$('#ah-container-body div.label').on('click', handleLabelClick);
-			$('#h-manual-heal-btn').on('click', handleManualHealClick);
+			$('.h-manual-heal-btn').on('click', handleManualHealClick);
 			$('#hMinHealHpPercent').on('input change', handleMinHealHpPercentChange).on('focusout', handleMinHealHpPercentFocusOut);
 			$('#hMinPotionHealing').on('input change', handleMinPotionHealingChange).on('focusout', handleMinPotionHealingFocusOut);
+            $('#hIgnoredItems').on('change keyup paste', handleIgnoredChange).on('focusout', handleIgnoredFocusOut);
+            handleIgnoredItemDropping();
 
 			$(window).on('resize', () => ensureInBounds($('#ah-container')));
 		}
@@ -740,11 +844,18 @@ class YuukiAutoHeal {
 		init();
 	}
 
-    useItem(item) {
+    getIgnoredItemsArray(ignoredText) {
+        return ignoredText.split(/[;,]/).map(itemName => {
+            let trimmedName = itemName.trim();
+            return trimmedName.charAt(0).toUpperCase() + trimmedName.slice(1).toLowerCase();
+        }).filter(itemName => itemName !== "");
+    }
+
+    useItem(item, supress = false) {
         const { name, id } = item;
 
         unsafeWindow._g(`moveitem&st=1&id=${id}`, () => {
-            setTimeout(() => this.autoHeal(), this.healInterval);
+            setTimeout(() => this.autoHeal(supress), this.healInterval);
         });
     }
 
@@ -766,9 +877,10 @@ class YuukiAutoHeal {
     getPotions(hp, maxhp, lvl) {
         const potions = !this.options.hPotion ? [] : this.Engine.items
                 .fetchLocationItems("g")
+                .filter((item) => !this.ignoredItems.includes(item.name))
                 .filter((item) => item._cachedStats.hasOwnProperty("leczy"))
-				.filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
-                .filter((item) => item._cachedStats.leczy >= this.options.hMinPotionHealing)
+				.filter((item) => this.options.hRarity.includes( this.rarityDict[item._cachedStats.rarity] ))
+                .filter((item) => parseInt(item._cachedStats.leczy) >= this.options.hMinPotionHealing)
                 .filter(
                     (item) =>
                         !item._cachedStats.hasOwnProperty("lvl") ||
@@ -785,8 +897,9 @@ class YuukiAutoHeal {
     getFullHeals(hp, maxhp, lvl) {
         const fullHeals = !this.options.hFull ? [] : this.Engine.items
                 .fetchLocationItems("g")
+                .filter((item) => !this.ignoredItems.includes(item.name))
                 .filter((item) => item._cachedStats.hasOwnProperty("fullheal"))
-				.filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
+				.filter((item) => this.options.hRarity.includes( this.rarityDict[item._cachedStats.rarity] ))
                 .filter(
                     (item) =>
                         !item._cachedStats.hasOwnProperty("lvl") ||
@@ -803,9 +916,10 @@ class YuukiAutoHeal {
     getPercentHeals(hp, maxhp, lvl) {
         const percentHeals = !this.options.hPercent ? [] : this.Engine.items
                 .fetchLocationItems("g")
+                .filter((item) => !this.ignoredItems.includes(item.name))
                 .filter((item) => item._cachedStats.hasOwnProperty("perheal"))
-				.filter((item) => this.options.rarity.includes( this.rarityDict[item._cachedStats.rarity] ))
-                .filter((item) => item._cachedStats.perheal <= ((maxhp - hp) * 100) / maxhp)
+				.filter((item) => this.options.hRarity.includes( this.rarityDict[item._cachedStats.rarity] ))
+                .filter((item) => hp === 1 || item._cachedStats.perheal <= ((maxhp - hp) * 100) / maxhp)
                 .filter(
                     (item) =>
                         !item._cachedStats.hasOwnProperty("lvl") ||
@@ -820,8 +934,8 @@ class YuukiAutoHeal {
         return percentHeals;
     }
 
-    autoHeal() {
-        if (!this.options.active || this.Engine.dead) {
+    autoHeal(supress = false) {
+        if ((!supress && !this.options.active) || this.Engine.dead) {
             return;
         }
 
@@ -832,7 +946,7 @@ class YuukiAutoHeal {
             const lvl = this.Engine.hero.d.lvl;
 
             const allPotions = this.getPotions(hp, maxhp, lvl);
-            const potions = allPotions.filter((item) => item._cachedStats.leczy <= maxhp - hp);
+            const potions = allPotions.filter((item) => parseInt(item._cachedStats.leczy) <= (maxhp - hp));
             const fullHeals = this.getFullHeals(hp, maxhp, lvl);
             const percentHeals = this.getPercentHeals(hp, maxhp, lvl);
 
@@ -847,7 +961,7 @@ class YuukiAutoHeal {
                 item = this.getItemWithMinPropValue(allPotions, 'leczy');
 
             if (item !== undefined) {
-                this.useItem(item);
+                this.useItem(item, supress);
 				if(this.options.hNotify) {
 					unsafeWindow.message('Uleczono: '+item.name+' (*'+this.rarityDict[item._cachedStats.rarity]+'*)');
 				}
