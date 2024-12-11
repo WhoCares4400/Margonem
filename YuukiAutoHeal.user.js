@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AutoHeal by Yuuki [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.8.1
 // @description  AutoHeal do Margonem (Nowy Interfejs)
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -225,7 +225,7 @@ class YuukiAutoHeal {
 
 			#ah-container-header {
                 width: 300px;
-				min-height: 18px;
+				min-height: 19px;
 				background: linear-gradient(180deg, rgba(68, 68, 68, 0.8), rgba(34, 34, 34, 0.8));
 				border-bottom: 1px solid #555;
 				border-top-left-radius: 5px;
@@ -246,7 +246,7 @@ class YuukiAutoHeal {
                 z-index: 1;
 			}
             #ah-container #ah-expand-icon > svg {
-                transition: transform 0.3s;
+                transition: transform 0.4s;
                 height: 13px;
                 width: 13px;
                 padding: 8px;
@@ -256,6 +256,7 @@ class YuukiAutoHeal {
                 height: 11px;
                 width: 11px;
                 padding: 3px;
+                margin-top: 1px;
                 transform: rotate(0deg);
             }
 			#ah-container-header .ah-h-small {
@@ -264,6 +265,7 @@ class YuukiAutoHeal {
 			}
             #ah-container #heal-active-checkbox {
                 margin-left: 7px;
+                transition: margin-left 0.2s;
             }
             #ah-container.shrinked #heal-active-checkbox {
                 transform: scale(0.9);
@@ -324,17 +326,17 @@ class YuukiAutoHeal {
 			#ah-container-body p {
 				margin: 0;
 				font-size: 13px;
-				color: #ddd; /* Lighter text color for modern feel */
+				color: #ddd;
 			}
 
 			#ah-container-body a {
-				color: #1e90ff; /* Modern blue for links */
+				color: #1e90ff;
 				text-decoration: none;
-				transition: color 0.3s ease; /* Smooth link color transition */
+				transition: color 0.3s ease;
 			}
 
 			#ah-container-body a:hover {
-				color: #63b8ff; /* Lighter blue on hover */
+				color: #63b8ff;
 			}
 
 			#ah-container .checkbox {
@@ -666,13 +668,12 @@ class YuukiAutoHeal {
 
         function handleIgnoredItemDropping() {
             // Adding ignored items by draging items
+            let ignoreDefaultItemDrop = false;
             $('.ignored-items-container').droppable({
                 greedy: true,
                 accept: '.item',
                 drop: (e, { draggable, position, helper }) => {
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    e.preventDefault();
+                    ignoreDefaultItemDrop = true;
 
                     helper.hide();
                     const target = document.elementFromPoint(position.left, position.top);
@@ -686,6 +687,9 @@ class YuukiAutoHeal {
                     const ignoreInput = $('#hIgnoredItems');
                     ignoreInput.val( ignoreInputValue !== "" ? ignoreInputValue+', '+itemName : itemName );
                     ignoreInput.trigger("focusout");
+                    setTimeout(()=>{
+                        ignoreDefaultItemDrop = false;
+                    }, 2);
                 },
                 activate: function() {
                     $(this).addClass("light-up");
@@ -695,10 +699,16 @@ class YuukiAutoHeal {
                 }
             });
 
-            const originalDeleteNotif = unsafeWindow.Engine.interface.deleteNotif;
-            unsafeWindow.Engine.interface.deleteNotif = function(i) {
-                console.log(i);
-                originalDeleteNotif.call(this, i);
+            const originalmAlert = unsafeWindow.mAlert;
+            unsafeWindow.mAlert = function(t,e,i,n) {
+                if (t.includes('Co chcesz zrobić z tym przedmiotem?')) {
+                    setTimeout(()=>{
+                        if (!ignoreDefaultItemDrop) originalmAlert.call(this, t,e,i,n);
+                    }, 1);
+                    return;
+                }
+
+                originalmAlert.call(this, t,e,i,n);
             };
         }
 
