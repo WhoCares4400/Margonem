@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.9.1
+// @version      1.9.2
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -389,6 +389,11 @@
                     }
                     chatToggle(wnd);
                     handleChatToggle(wnd);
+                    setTimeout(()=>{
+                        const scrollPane = document.querySelector('.scroll-pane');
+                        scrollPane.scrollTop = scrollPane.scrollHeight - scrollPane.clientHeight;
+                        updateChatScroll(wnd);
+                    });
 
                     setTimeout(() => {
                         handleOtherChatAddons();
