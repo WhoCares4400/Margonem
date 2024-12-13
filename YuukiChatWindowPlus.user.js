@@ -390,7 +390,7 @@
                     chatToggle(wnd);
                     handleChatToggle(wnd);
                     setTimeout(() => {
-                        const scrollPane = document.querySelector('.scroll-pane');
+                        const scrollPane = wnd.querySelector('.scroll-pane');
                         scrollPane.scrollTop = scrollPane.scrollHeight - scrollPane.clientHeight;
                         updateChatScroll(wnd);
                     }, 1);
