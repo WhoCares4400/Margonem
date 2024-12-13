@@ -383,17 +383,17 @@
             if (Engine?.allInit && hasChatSizeClass) {
                 clearInterval(interval);
 
-                setTimeout(()=>{
+                setTimeout(() => {
                     if (document.querySelector('.game-window-positioner').classList.contains('chat-size-'+(enabled ? '1' : '0'))) {
                         Engine.chatController.getChatWindow().chatToggle();
                     }
                     chatToggle(wnd);
                     handleChatToggle(wnd);
-                    setTimeout(()=>{
+                    setTimeout(() => {
                         const scrollPane = document.querySelector('.scroll-pane');
                         scrollPane.scrollTop = scrollPane.scrollHeight - scrollPane.clientHeight;
                         updateChatScroll(wnd);
-                    });
+                    }, 1);
 
                     setTimeout(() => {
                         handleOtherChatAddons();
@@ -652,7 +652,7 @@
             if (hoverHide && wnd.querySelector('magic_input:focus')) {
                 scrollWrapper.classList.add("supress");
                 document.addEventListener('mouseup', function() {
-                    setTimeout(()=>{
+                    setTimeout(() => {
                         scrollWrapper.classList.remove("supress");
                         if (!wnd.querySelector('magic_input:focus')) {
                             const mouseMoveEvent = new MouseEvent('mousemove', {
