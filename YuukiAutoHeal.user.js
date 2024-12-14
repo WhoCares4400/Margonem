@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AutoHeal by Yuuki [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.8.1
+// @version      1.8.2
 // @description  AutoHeal do Margonem (Nowy Interfejs)
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -728,35 +728,22 @@ class YuukiAutoHeal {
 		}
 
 		function initializeDragging($header, $container) {
-			let isDragging = false;
-			let offsetX = 0, offsetY = 0;
-
-			$header.on('mousedown', function(e) {
-				isDragging = true;
-				offsetX = e.clientX - $container.offset().left;
-				offsetY = e.clientY - $container.offset().top;
-				$header.css('cursor', 'grabbing');
-			});
-
-			$(document).on('mousemove', function(e) {
-				if (isDragging) {
-					const left = e.clientX - offsetX;
-					const top = e.clientY - offsetY;
-					$container.css({ left: `${left}px`, top: `${top}px` });
-					ensureInBounds($container);
-				}
-			});
-
-			$(document).on('mouseup', function() {
-				if (isDragging) {
-					isDragging = false;
-					$header.css('cursor', 'grab');
-					const left = $container.css('left');
-					const top = $container.css('top');
-					GM_setValue(self.heroId+'ah-c-pos', JSON.stringify({ left, top }));
-				}
-			});
-		}
+            $container.draggable(
+                {
+                    containment: "body",
+                    handle: $header,
+                    start: () => {
+                        $header.css('cursor', 'grabbing');
+                    },
+                    stop: () => {
+                        $header.css('cursor', 'grab');
+                        const left = $container.css('left');
+                        const top = $container.css('top');
+                        GM_setValue(self.heroId+'ah-c-pos', JSON.stringify({ left, top }));
+                    }
+                }
+            );
+        }
 
 		function restoreContainerPosition($container) {
 			const savedPosition = GM_getValue(self.heroId+'ah-c-pos', null);
