@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AutoHeal by Yuuki [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.8.2
+// @version      1.8.3
 // @description  AutoHeal do Margonem (Nowy Interfejs)
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -65,6 +65,7 @@ class YuukiAutoHeal {
 			hPotion: Boolean(parseInt(GM_getValue(this.heroId+'ah-hPotion', '1'))),
 			hFull: Boolean(parseInt(GM_getValue(this.heroId+'ah-hFull', '0'))),
 			hPercent: Boolean(parseInt(GM_getValue(this.heroId+'ah-hPercent', '0'))),
+            hHealAfterDeath: Boolean(parseInt(GM_getValue(this.heroId+'ah-hHealAfterDeath', '1'))),
 			hHealToFull: Boolean(parseInt(GM_getValue(this.heroId+'ah-hHealToFull', '0'))),
 			hMinHealHpPercent: parseInt(GM_getValue(this.heroId+'ah-hMinHealHpPercent', '80')),
             hMinPotionHealing: parseInt(GM_getValue(this.heroId+'ah-hMinPotionHealing', '0')),
@@ -132,26 +133,8 @@ class YuukiAutoHeal {
                 setTimeout(() => {
                     let heroData = unsafeWindow.Engine.hero.d;
 
-                    function watchWarriorStatsObjChanges(obj, propertyName) {
+                    function watchObjPropertyChanges(obj, propertyName, callback) {
                         let value = obj[propertyName];
-
-                        Object.defineProperty(obj, propertyName, {
-                            get() {
-                                return value;
-                            },
-                            set(ws) {
-                                onHpChange(ws.hp);
-                                onMaxHpChange(ws.maxhp);
-
-                                value = ws;
-                            },
-                            configurable: true
-                        });
-                    }
-
-                    function watchHpPropertyChanges(obj, propertyName, callback) {
-                        let value = obj[propertyName];
-
                         Object.defineProperty(obj, propertyName, {
                             get() {
                                 return value;
@@ -182,10 +165,20 @@ class YuukiAutoHeal {
                             }
                         }
                     }
+                    function onWarriorStatsChange(ws) {
+                        onHpChange(ws.hp);
+                        onMaxHpChange(ws.maxhp);
+                    }
+                    function onHeroDead(isDead) {
+                        if (!isDead && self.options.hHealAfterDeath) {
+                            setTimeout(()=>{self.autoHeal();}, 100);
+                        }
+                    }
 
-                    watchHpPropertyChanges(heroData, "hp", onHpChange);
-                    watchHpPropertyChanges(heroData, "maxhp", onMaxHpChange);
-                    watchWarriorStatsObjChanges(heroData, "warrior_stats");
+                    watchObjPropertyChanges(heroData, "hp", onHpChange);
+                    watchObjPropertyChanges(heroData, "maxhp", onMaxHpChange);
+                    watchObjPropertyChanges(heroData, "warrior_stats", onWarriorStatsChange);
+                    watchObjPropertyChanges(unsafeWindow.Engine, "dead", onHeroDead);
                 }, 100);
             }
         }, 100);
@@ -527,6 +520,7 @@ class YuukiAutoHeal {
 								<div class="mb-1 d-flex align-items-center"><div class="checkbox${this.options.hFull ? ' active' : ''}" id="opt-full-heal" data-opt="hFull"></div><div class="label ms-1 lh-sm">Pełne leczenie</div></div>
 								<div class="d-flex align-items-center"><div class="checkbox${this.options.hPercent ? ' active' : ''}" id="opt-percent-heal" data-opt="hPercent"></div><div class="label ms-1 lh-sm">Mikstury procentowe</div></div>
 								<br>
+                                <div class="mb-1 d-flex align-items-center"><div class="checkbox${this.options.hHealAfterDeath ? ' active' : ''}" id="opt-heal-after-death" data-opt="hHealAfterDeath"></div><div class="label ms-1 lh-sm">Lecz po śmierci</div></div>
 								<div class="d-flex"><div class="checkbox${this.options.hHealToFull ? ' active' : ''}" id="opt-heal-to-full" data-opt="hHealToFull"></div><div class="label ms-1 lh-sm-p">Zawsze lecz do pełna (nawet gdy zmarnujesz część mikstury), jeśli życie spadnie poniżej <input type="number" id="hMinHealHpPercent" value="${this.options.hMinHealHpPercent}" min="1" max="100"/>%</div></div>
 								<div class="d-flex align-items-center mt-2 lh-sm"><input type="number" class="me-2" id="hMinPotionHealing" value="${this.options.hMinPotionHealing}" min="0" /> Minimalna wartość leczenia mikstury</div>
 							</div>
@@ -811,7 +805,7 @@ class YuukiAutoHeal {
         }
 
 		function initializeEventListeners() {
-			$('#heal-active-checkbox, #opt-potion-heal, #opt-full-heal, #opt-percent-heal, #opt-heal-to-full, #opt-notify, #opt-show-hp-display').on('click', handleOptionClick);
+			$('#heal-active-checkbox, #opt-potion-heal, #opt-full-heal, #opt-percent-heal, #opt-heal-after-death, #opt-heal-to-full, #opt-notify, #opt-show-hp-display').on('click', handleOptionClick);
 			$('#opt-rarity-p, #opt-rarity-u, #opt-rarity-h, #opt-rarity-ul, #opt-rarity-l').on('click', handleRarityClick);
 			$('#ah-container-body div.label').on('click', handleLabelClick);
 			$('.h-manual-heal-btn').on('click', handleManualHealClick);
