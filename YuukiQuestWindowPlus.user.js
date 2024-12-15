@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Quest Window+ (QuestW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Odświeżone okno z questami
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -234,6 +234,16 @@
             font-size: 11px;
             align-content: center;
         }
+        .yuuki-qw-plus select {
+            cursor: url(/img/gui/cursor/1n.png?v=1728634377350), url(/img/gui/cursor/1n.cur?v=1728634377350), auto !important;
+            flex-shrink: 0;
+        }
+        .yuuki-qw-plus input,
+        .yuuki-qw-plus select {
+            border-radius: 5px;
+            background: #3b3b3b;
+            color: wheat;
+        }
 
         .yuuki-qw-plus-dis .end-line,
         .yuuki-qw-plus-dis .border-image,
@@ -277,7 +287,7 @@
      * Initializes the quest window modifications.
      */
     function initializeQuestWindow() {
-        const wnd = Engine?.quests?.wnd?.$[0];
+        const wnd = Engine.quests.wnd.$[0];
         if (!wnd) return;
 
         customizeWindowAppearance(wnd);
@@ -288,6 +298,7 @@
         addInfoContainer(wnd);
         initializeHideCollapsedQuests(wnd);
         prependAdditionalButtons(wnd);
+        createTrackingShortcutInput(wnd);
         handleTrackingChange(wnd);
         monitorScrollPane(wnd);
 
@@ -533,6 +544,91 @@
     }
 
     /**
+     * Adds quest tracking shortcut selection.
+     * @param {HTMLElement} wnd - The quest window element.
+     */
+    function createTrackingShortcutInput(wnd) {
+        const wrapperDiv = wnd.querySelector('.additional-btns-wrapper');
+        const container = document.createElement('div');
+        container.style.paddingBottom = '0.25rem';
+
+        // Create Label
+        const label = document.createElement('label');
+        label.htmlFor = 'qw-navigation-shortcut';
+        label.style.color = "wheat";
+        label.textContent = 'Skrót klawiszowy nawigacji:';
+
+        // Create Text Input
+        const shortcutInput = document.createElement('input');
+        shortcutInput.type = 'text';
+        shortcutInput.id = 'qw-navigation-shortcut';
+        shortcutInput.readOnly = true;
+        shortcutInput.style.color = "wheat";
+        shortcutInput.style.textAlign = "center";
+
+        let currentShortcut = GM_getValue('yk-questTrackingShortcut', '');
+        let currentListener = null;
+
+        function setShortcutListener(shortcut) {
+            if (currentListener) {
+                window.removeEventListener('keydown', currentListener);
+            }
+
+            if (shortcut) {
+                currentShortcut = shortcut;
+                currentListener = (event) => {
+                    const activeKeys = [];
+                    if (event.ctrlKey) activeKeys.push('CTRL');
+                    if (event.shiftKey) activeKeys.push('SHIFT');
+                    if (event.altKey) activeKeys.push('ALT');
+                    const eventKey = event.key.toUpperCase();
+                    if (!['CONTROL', 'SHIFT', 'ALT'].includes(eventKey)) {
+                        activeKeys.push(eventKey);
+                    }
+
+                    if (activeKeys.join(' + ') === currentShortcut) {
+                        goToTrackingTarget();
+                    }
+                };
+                window.addEventListener('keydown', currentListener);
+            }
+        }
+
+        shortcutInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Escape' || e.key === 'Backspace') {
+                shortcutInput.value = "";
+                GM_setValue('yk-questTrackingShortcut', '');
+                setShortcutListener('');
+                return;
+            }
+
+            const keys = [];
+            if (e.ctrlKey) keys.push('CTRL');
+            if (e.shiftKey) keys.push('SHIFT');
+            if (e.altKey) keys.push('ALT');
+
+            let detectedKey = e.key.toUpperCase();
+            if (!['CONTROL', 'SHIFT', 'ALT'].includes(detectedKey)) {
+                keys.push(detectedKey);
+            }
+
+            if (keys.length === 0 || (keys.length === 1 && ['CONTROL', 'SHIFT', 'ALT'].includes(keys[0]))) return;
+
+            const newShortcut = keys.join(' + ');
+            shortcutInput.value = newShortcut;
+            GM_setValue('yk-questTrackingShortcut', newShortcut);
+            setShortcutListener(newShortcut);
+        });
+
+        shortcutInput.value = currentShortcut;
+        setShortcutListener(currentShortcut);
+
+        container.append(label);
+        container.append(shortcutInput);
+        wrapperDiv.prepend(container);
+    }
+
+    /**
      * Adds additional buttons to the quest window.
      * @param {HTMLElement} wnd - The quest window element.
      */
@@ -654,16 +750,23 @@
             </svg>
         `;
 
-        trackingBtn.addEventListener('click', () => {
-            const targets = Engine?.targets?.check() ?? [null];
-            const position = Object.values(targets)[0]?.objParent;
-            if (position) {
-                Engine?.hero?.autoGoTo(position);
-            }
-        });
+        trackingBtn.addEventListener('click', goToTrackingTarget);
         $(trackingBtn).tip("Nawiguj do celu");
 
         return trackingBtn;
+    }
+
+    /**
+     * Goes to current tracking target.
+     */
+    function goToTrackingTarget() {
+        if (Engine.battle.isBattleShow()) return;
+
+        const targets = Engine?.targets?.check() ?? [null];
+        const position = Object.values(targets)[0]?.objParent;
+        if (position) {
+            Engine.hero.autoGoTo(position);
+        }
     }
 
     /**
@@ -697,7 +800,7 @@
 
         const activeQuestCount = scrollPane.querySelectorAll('.quest-box').length;
         const visibleQuestCount = scrollPane.querySelectorAll('.quest-box:not(.quest-hidden)').length;
-        const finishedQuestCount = Object.keys( Engine?.quests?.getFinishQuest() ?? [] ).length;
+        const finishedQuestCount = Object.keys( Engine.quests.getFinishQuest() ).length;
 
         document.getElementById('active-quest-count').innerText = activeQuestCount.toString();
         document.getElementById('visible-quest-count').innerText = visibleQuestCount.toString();
