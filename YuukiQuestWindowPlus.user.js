@@ -287,7 +287,7 @@
      * Initializes the quest window modifications.
      */
     function initializeQuestWindow() {
-        const wnd = Engine.quests.wnd.$[0];
+        const wnd = Engine?.quests?.wnd?.$[0];
         if (!wnd) return;
 
         customizeWindowAppearance(wnd);
@@ -800,7 +800,7 @@
 
         const activeQuestCount = scrollPane.querySelectorAll('.quest-box').length;
         const visibleQuestCount = scrollPane.querySelectorAll('.quest-box:not(.quest-hidden)').length;
-        const finishedQuestCount = Object.keys( Engine.quests.getFinishQuest() ).length;
+        const finishedQuestCount = Object.keys( Engine?.quests?.getFinishQuest() ?? [] ).length;
 
         document.getElementById('active-quest-count').innerText = activeQuestCount.toString();
         document.getElementById('visible-quest-count').innerText = visibleQuestCount.toString();
