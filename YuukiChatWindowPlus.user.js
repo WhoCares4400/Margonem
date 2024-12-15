@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chat Window+ (ChatW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.9.2
+// @version      1.9.3
 // @description  Odświeżone okno chatu
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -772,10 +772,10 @@
             return;
         }
         const canvas = gameCanvas[0];
-        const canvasRect = canvas.getBoundingClientRect();
+        const bodyRect = document.body.getBoundingClientRect();
 
-        const x = e.clientX - canvasRect.left;
-        const y = e.clientY - canvasRect.top + canvasRect.y;
+        const x = e.clientX - bodyRect.left;
+        const y = e.clientY - bodyRect.top + bodyRect.y;
 
         const canvasClickEvent = new MouseEvent(e.type, {
             bubbles: true,
