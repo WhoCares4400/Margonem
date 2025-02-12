@@ -557,7 +557,9 @@ class YuukiAutoHeal {
             unsafeWindow.Engine.interface.get$dropToDeleteWidgetLayer().append(containerHTML);
 		}
 
-		function handleOptionClick() {
+		function handleOptionClick(e) {
+            clickEventHandler(e, $(this));
+
 			const type = $(this).data('opt');
 			$(this).toggleClass('active');
 			self.options[type] = !self.options[type];
@@ -574,7 +576,9 @@ class YuukiAutoHeal {
 			}
 		}
 
-		function handleRarityClick() {
+		function handleRarityClick(e) {
+            clickEventHandler(e, $(this));
+
 			const rarity = $(this).data('rarity');
 			$(this).toggleClass('active');
 			if ($(this).hasClass('active')) {
@@ -586,11 +590,15 @@ class YuukiAutoHeal {
 		}
 
 		function handleLabelClick(e) {
+            clickEventHandler(e, $(this));
+
 			if ($(e.target).is("input")) return;
-			$(this).prev().trigger('click');
+			$(this).prev().trigger('touchend');
 		}
 
-		function handleManualHealClick() {
+		function handleManualHealClick(e) {
+            clickEventHandler(e, $(this));
+
 			self.autoHeal(true);
 		}
 
@@ -776,7 +784,7 @@ class YuukiAutoHeal {
         }
 
 		function handleHeaderDblClick($header, $body) {
-			$header.on('dblclick', function(e) {
+            const onDblClick = function(e) {
 				if ($(e.target).hasClass("checkbox")) return;
 
                 self.options.shrinked = !self.options.shrinked;
@@ -797,12 +805,25 @@ class YuukiAutoHeal {
                         $body.stop(true, true).slideToggle();
                     }, 400);
                 }
+			};
 
-			});
+			$header.on('dblclick', onDblClick);
+            $header.on('touchstart', tapHandler);
+
+            let tapedTwice = false;
+            function tapHandler(event) {
+                if(!tapedTwice) {
+                    tapedTwice = true;
+                    setTimeout( function() { tapedTwice = false; }, 300 );
+                    return;
+                }
+                event.preventDefault();
+                onDblClick(event);
+            }
 		}
 
         function handleExpandIconClick($header) {
-            $('#ah-expand-icon').on('click touchend', ()=>{ $header.trigger('dblclick'); });
+            $('#ah-expand-icon').on('click touchend', function(e) { clickEventHandler(e, $(this)); $header.trigger('dblclick'); });
         }
 
 		function initializeEventListeners() {
@@ -817,6 +838,10 @@ class YuukiAutoHeal {
 
 			$(window).on('resize', () => ensureInBounds($('#ah-container')));
 		}
+        function clickEventHandler(event, selector) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
 
 		function init() {
 			appendContainerToBody(containerHTML);
