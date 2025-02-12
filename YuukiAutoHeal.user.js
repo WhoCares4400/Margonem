@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AutoHeal by Yuuki [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.8.3
+// @version      1.8.4
 // @description  AutoHeal do Margonem (Nowy Interfejs)
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -745,8 +745,9 @@ class YuukiAutoHeal {
 				const { left, top } = JSON.parse(savedPosition);
 				$container.css({ left, top });
 			} else {
-				$container.css({ top: '100px', left: '100px' });
+				$container.css({ top: '25%', left: '25%' });
 			}
+            ensureInBounds($container);
 		}
 
         function initializeScrolling($body) {
@@ -801,14 +802,14 @@ class YuukiAutoHeal {
 		}
 
         function handleExpandIconClick($header) {
-            $('#ah-expand-icon').click(()=>{ $header.trigger('dblclick'); });
+            $('#ah-expand-icon').on('click touchend', ()=>{ $header.trigger('dblclick'); });
         }
 
 		function initializeEventListeners() {
-			$('#heal-active-checkbox, #opt-potion-heal, #opt-full-heal, #opt-percent-heal, #opt-heal-after-death, #opt-heal-to-full, #opt-notify, #opt-show-hp-display').on('click', handleOptionClick);
-			$('#opt-rarity-p, #opt-rarity-u, #opt-rarity-h, #opt-rarity-ul, #opt-rarity-l').on('click', handleRarityClick);
-			$('#ah-container-body div.label').on('click', handleLabelClick);
-			$('.h-manual-heal-btn').on('click', handleManualHealClick);
+			$('#heal-active-checkbox, #opt-potion-heal, #opt-full-heal, #opt-percent-heal, #opt-heal-after-death, #opt-heal-to-full, #opt-notify, #opt-show-hp-display').on('click touchend', handleOptionClick);
+			$('#opt-rarity-p, #opt-rarity-u, #opt-rarity-h, #opt-rarity-ul, #opt-rarity-l').on('click touchend', handleRarityClick);
+			$('#ah-container-body div.label').on('click touchend', handleLabelClick);
+			$('.h-manual-heal-btn').on('click touchend', handleManualHealClick);
 			$('#hMinHealHpPercent').on('input change', handleMinHealHpPercentChange).on('focusout', handleMinHealHpPercentFocusOut);
 			$('#hMinPotionHealing').on('input change', handleMinPotionHealingChange).on('focusout', handleMinPotionHealingFocusOut);
             $('#hIgnoredItems').on('change keyup paste', handleIgnoredChange).on('focusout', handleIgnoredFocusOut);
