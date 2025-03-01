@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Quest Window+ (QuestW+) [NI]
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.7.1
 // @description  Odświeżone okno z questami
 // @author       Paladynka Yuuki
 // @match        http*://*.margonem.pl/
@@ -152,7 +152,7 @@
             border: none;
         }
         .yuuki-qw-plus .end-line {
-            background: url(../img/gui/buttony.png?v=1732022921596) -428px -494px;
+            background-image: linear-gradient(90deg,transparent 10%,rgba(255,255,255,.8),transparent 90%);
             width: 213px;
             height: 1px;
             margin-top: 2px;
@@ -260,6 +260,7 @@
             display: inline-block !important;
         }
         .yuuki-qw-plus .enable-yuuki-q-btn,
+        .yuuki-qw-plus .interface-element-header-1-background-stretch,
         .yuuki-qw-plus .quest-box.yk-tracked-quest .quest-buttons-wrapper .button.remove {
             display: none !important;
         }
